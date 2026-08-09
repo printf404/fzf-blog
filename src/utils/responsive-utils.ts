@@ -9,6 +9,7 @@ export interface ResponsiveSidebarConfig {
 	desktopShowSidebar: boolean;
 	position: "left" | "right" | "both";
 	tabletSidebar: "left" | "right";
+	desktopSidebarPlacement: "split" | "left";
 }
 
 /**
@@ -22,6 +23,8 @@ export interface ResponsiveSidebarConfig {
 export function getResponsiveSidebarConfig(): ResponsiveSidebarConfig {
 	const position = sidebarLayoutConfig.position;
 	const tabletSidebar = sidebarLayoutConfig.tabletSidebar ?? "left";
+	const desktopSidebarPlacement =
+		sidebarLayoutConfig.desktopSidebarPlacement ?? "split";
 
 	const isBothSidebars = sidebarLayoutConfig.enable && position === "both";
 
@@ -51,6 +54,7 @@ export function getResponsiveSidebarConfig(): ResponsiveSidebarConfig {
 		desktopShowSidebar,
 		position,
 		tabletSidebar,
+		desktopSidebarPlacement,
 	};
 }
 
@@ -74,13 +78,17 @@ export function generateGridClasses(config: ResponsiveSidebarConfig): {
 	) {
 		// 双侧边栏
 		if (config.tabletSidebar === "right") {
-			// 平板端显示右侧栏: 769-1279px [内容+右侧栏], 1280px+ [左+中+右]
+			// 平板端显示右侧栏: 769-1279px [内容+右侧栏]
 			gridCols =
-				"grid-cols-1 md:grid-cols-[1fr_17.5rem] xl:grid-cols-[17.5rem_1fr_17.5rem]";
+				config.desktopSidebarPlacement === "left"
+					? "grid-cols-1 md:grid-cols-[1fr_17.5rem] xl:grid-cols-[17.5rem_17.5rem_1fr]"
+					: "grid-cols-1 md:grid-cols-[1fr_17.5rem] xl:grid-cols-[17.5rem_1fr_17.5rem]";
 		} else {
-			// 平板端显示左侧栏（默认）: 769-1279px [左侧栏+内容], 1280px+ [左+中+右]
+			// 平板端显示左侧栏（默认）: 769-1279px [左侧栏+内容]
 			gridCols =
-				"grid-cols-1 md:grid-cols-[17.5rem_1fr] xl:grid-cols-[17.5rem_1fr_17.5rem]";
+				config.desktopSidebarPlacement === "left"
+					? "grid-cols-1 md:grid-cols-[17.5rem_1fr] xl:grid-cols-[17.5rem_17.5rem_1fr]"
+					: "grid-cols-1 md:grid-cols-[17.5rem_1fr] xl:grid-cols-[17.5rem_1fr_17.5rem]";
 		}
 	} else if (config.hasLeftComponents && !config.hasRightComponents) {
 		// 仅左侧边栏: 769px+显示左+中，768-以下单列
@@ -138,17 +146,21 @@ export function generateRightSidebarClasses(
 			"md:col-span-1",
 			"md:max-w-70",
 			"md:col-start-2", // 平板端在第2列
-			"xl:col-start-3", // 桌面端在第3列
+			config.desktopSidebarPlacement === "left"
+				? "xl:col-start-2"
+				: "xl:col-start-3",
 		);
 	} else if (config.isBothSidebars) {
-		// 双侧栏+平板端显示左侧栏（默认）：仅1280px+显示
+		// 双侧栏+平板端显示左侧栏（默认）：第二侧栏仅1280px+显示
 		classes.push(
 			"xl:block",
 			"xl:row-start-1",
 			"xl:row-end-3",
 			"xl:col-span-1",
 			"xl:max-w-70",
-			"xl:col-start-3",
+			config.desktopSidebarPlacement === "left"
+				? "xl:col-start-2"
+				: "xl:col-start-3",
 		);
 	} else if (config.position === "right") {
 		// 仅右侧栏模式（非双侧栏）：769px+显示，在第2列
@@ -193,19 +205,27 @@ export function generateMainContentClasses(
 		config.hasRightComponents
 	) {
 		if (config.tabletSidebar === "right") {
-			// 双侧栏+平板端右侧栏: 平板端内容在第1列，桌面端内容在第2列
+			// 双侧栏+平板端右侧栏: 平板端内容在第1列
 			classes.push("md:col-span-1");
 			classes.push("md:col-start-1");
 			classes.push("xl:col-span-1");
-			classes.push("xl:col-start-2");
-			classes.push("xl:col-end-3");
+			if (config.desktopSidebarPlacement === "left") {
+				classes.push("xl:col-start-3");
+			} else {
+				classes.push("xl:col-start-2");
+				classes.push("xl:col-end-3");
+			}
 		} else {
-			// 双侧栏+平板端左侧栏（默认）: 内容始终在第2列
+			// 双侧栏+平板端左侧栏（默认）: 平板端内容在第2列
 			classes.push("md:col-span-1");
 			classes.push("md:col-start-2");
 			classes.push("xl:col-span-1");
-			classes.push("xl:col-start-2");
-			classes.push("xl:col-end-3");
+			if (config.desktopSidebarPlacement === "left") {
+				classes.push("xl:col-start-3");
+			} else {
+				classes.push("xl:col-start-2");
+				classes.push("xl:col-end-3");
+			}
 		}
 	} else if (config.hasLeftComponents && !config.hasRightComponents) {
 		// 仅左侧边栏: 内容在第2列

@@ -18,6 +18,11 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 	// right: 平板端显示右侧边栏
 	tabletSidebar: "left",
 
+	// 桌面端双侧栏摆放方式，仅position为both时生效
+	// split: 左右分布，布局为 [左侧栏 + 正文 + 右侧栏]
+	// left: 两列侧边栏都放在正文左侧，布局为 [左侧栏 + 右侧栏组件列 + 正文]
+	desktopSidebarPlacement: "left",
+
 	// 文章详情页隐藏侧边栏，设为 true 则只在首页等非文章页显示
 	hideSidebarOnPostPage: false,
 
