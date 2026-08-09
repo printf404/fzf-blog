@@ -64,6 +64,22 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 			showOnPostPage: true,
 		},
 		{
+			// 组件类型：天气预报
+			type: "weatherForecast",
+			// 是否启用该组件
+			enable: true,
+			// 放在左边第一列侧边栏，但不放在最顶部
+			position: "top",
+			// 是否在文章详情页显示
+			showOnPostPage: true,
+			customProps: {
+				// 天气 API 预留位：
+				// 建议填一个你自己的服务端接口，由服务端根据访问者 IP 自动定位城市；
+				// 返回字段可参考 src/components/widget/WeatherForecast.astro 里的 fallbackWeather。
+				apiEndpoint: "",
+			},
+		},
+		{
 			// 组件类型：音乐播放器
 			type: "music",
 			// 是否启用该组件
@@ -103,10 +119,89 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 				collapseThreshold: 10,
 			},
 		},
+		{
+			// 组件类型：浏览数据统计
+			type: "visitStats",
+			// 是否启用该组件
+			enable: true,
+			// 放在左边第一列侧边栏底部
+			position: "sticky",
+			// 是否在文章详情页显示
+			showOnPostPage: true,
+			customProps: {
+				// 浏览统计 API 预留位：
+				// 建议返回 { totalViews: number, visits: number, visitors: number }。
+				// 不填写时会用本地示例统计兜底，方便先看 UI。
+				apiEndpoint: "",
+			},
+		},
 	],
 
 	// 右侧边栏组件配置列表
 	rightComponents: [
+		{
+			// 组件类型：时间问候卡片
+			type: "timeGreeting",
+			// 是否启用该组件
+			enable: true,
+			// 放在左边第二列侧边栏最顶部
+			position: "top",
+			// 是否在文章详情页显示
+			showOnPostPage: true,
+			customProps: {
+				// 问候图片链接预留位：
+				// 你拿到图片链接后，填到这里即可，例如 imageUrl: "https://example.com/hello.webp"
+				imageUrl: "",
+				imageAlt: "问候配图",
+			},
+		},
+		{
+			// 组件类型：日期进度模块
+			type: "dateProgress",
+			// 是否启用该组件
+			enable: true,
+			// 放在左边第二列侧边栏
+			position: "top",
+			// 是否在文章详情页显示
+			showOnPostPage: true,
+			customProps: {
+				// 节日倒计时配置，可按需要改成其他日期
+				festivalName: "中秋",
+				festivalDate: "2026-09-25",
+			},
+		},
+		{
+			// 组件类型：今日一言
+			type: "dailyQuote",
+			// 是否启用该组件
+			enable: true,
+			// 放在日期模块后面
+			position: "top",
+			// 是否在文章详情页显示
+			showOnPostPage: true,
+			customProps: {
+				// 句子库修改位置：
+				// 直接在 quotes 数组里增删句子即可。
+				quotes: [
+					{
+						text: "人生最大的幸福，是发现自己爱的人正好也爱着自己。",
+						author: "张爱玲",
+					},
+					{
+						text: "凡是过往，皆为序章。",
+						author: "莎士比亚",
+					},
+					{
+						text: "保持热爱，奔赴山海。",
+						author: "佚名",
+					},
+					{
+						text: "慢慢来，比较快。",
+						author: "佚名",
+					},
+				],
+			},
+		},
 		{
 			// 组件类型：最新动态组件
 			type: "dynamic",

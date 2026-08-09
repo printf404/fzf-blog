@@ -1,0 +1,293 @@
+---
+import { Icon } from "astro-icon/components";
+import WidgetLayout from "@/components/common/WidgetLayout.astro";
+import type { WidgetComponentConfig } from "@/types/config";
+
+interface Props {
+	class?: string;
+	style?: string;
+	widgetConfig?: WidgetComponentConfig;
+}
+
+const { class: className, style, widgetConfig } = Astro.props;
+const customProps = (widgetConfig?.customProps ?? {}) as Record<string, unknown>;
+const apiEndpoint =
+	typeof customProps.apiEndpoint === "string" ? customProps.apiEndpoint : "";
+const showTitle = widgetConfig?.showTitle !== false;
+---
+
+<WidgetLayout
+	name="天气预报"
+	showTitle={showTitle}
+	id="weather-forecast-widget"
+	class={className}
+	style={style}
+	isCollapsed={true}
+	collapsedHeight="13.75rem"
+	useExpandedButtonSpacing={true}
+>
+	<div
+		class="weather-widget"
+		data-weather-widget
+		data-weather-api-endpoint={apiEndpoint}
+	>
+		<div class="mb-4 flex items-start justify-between gap-3">
+			<div class="min-w-0">
+				<div class="mb-1 flex items-center gap-1.5 text-base font-bold text-neutral-800 transition dark:text-neutral-100">
+					<Icon
+						is:inline
+						name="material-symbols:location-on-rounded"
+						class="text-xl text-(--primary)"
+						aria-hidden="true"
+					/>
+					<span data-weather-location>位置自动识别中</span>
+				</div>
+				<div class="mt-5 flex items-end gap-4">
+					<div class="weather-temp leading-none">
+						<span data-weather-temp>29</span><span class="align-top text-lg">°</span>
+					</div>
+					<div class="pb-1 text-2xl font-bold text-neutral-900 transition dark:text-neutral-50" data-weather-text>
+						晴
+					</div>
+				</div>
+			</div>
+			<Icon
+				is:inline
+				name="material-symbols:wb-sunny-rounded"
+				class="weather-main-icon shrink-0 text-5xl text-(--primary)"
+				aria-hidden="true"
+				data-weather-main-icon
+			/>
+		</div>
+
+		<div class="mb-4 flex items-center justify-center gap-3 text-sm font-bold">
+			<span class="text-rose-500">高温 <span data-weather-high>33</span>° C</span>
+			<span class="h-4 w-px bg-(--line-color)"></span>
+			<span class="text-blue-500">低温 <span data-weather-low>23</span>° C</span>
+		</div>
+
+		<div class="weather-pills grid grid-cols-2 gap-2.5 border-t border-dashed border-(--line-color) pt-4">
+			<div class="weather-pill">
+				<Icon is:inline name="material-symbols:air-rounded" class="weather-pill-icon text-sky-500" />
+				<div>
+					<div class="weather-pill-label">风力</div>
+					<div class="weather-pill-value" data-weather-wind>北风 4级</div>
+				</div>
+			</div>
+			<div class="weather-pill">
+				<Icon is:inline name="material-symbols:humidity-percentage-rounded" class="weather-pill-icon text-blue-500" />
+				<div>
+					<div class="weather-pill-label">湿度</div>
+					<div class="weather-pill-value" data-weather-humidity>79%</div>
+				</div>
+			</div>
+			<div class="weather-pill">
+				<Icon is:inline name="material-symbols:device-thermostat-rounded" class="weather-pill-icon text-orange-500" />
+				<div>
+					<div class="weather-pill-label">体感温度</div>
+					<div class="weather-pill-value"><span data-weather-feels>30</span>° C</div>
+				</div>
+			</div>
+			<div class="weather-pill">
+				<Icon is:inline name="material-symbols:compress-rounded" class="weather-pill-icon text-violet-500" />
+				<div>
+					<div class="weather-pill-label">气压</div>
+					<div class="weather-pill-value"><span data-weather-pressure>964</span>hPa</div>
+				</div>
+			</div>
+			<div class="weather-pill">
+				<Icon is:inline name="material-symbols:filter-drama-rounded" class="weather-pill-icon text-slate-500" />
+				<div>
+					<div class="weather-pill-label">云量</div>
+					<div class="weather-pill-value"><span data-weather-cloud>77</span>%</div>
+				</div>
+			</div>
+			<div class="weather-pill">
+				<Icon is:inline name="material-symbols:water-drop-rounded" class="weather-pill-icon text-cyan-500" />
+				<div>
+					<div class="weather-pill-label">降水概率</div>
+					<div class="weather-pill-value"><span data-weather-rain-rate>0</span>%</div>
+				</div>
+			</div>
+			<div class="weather-pill">
+				<Icon is:inline name="material-symbols:rainy-rounded" class="weather-pill-icon text-cyan-500" />
+				<div>
+					<div class="weather-pill-label">降水量</div>
+					<div class="weather-pill-value"><span data-weather-rain>0</span>mm</div>
+				</div>
+			</div>
+			<div class="weather-pill">
+				<Icon is:inline name="material-symbols:sunny-rounded" class="weather-pill-icon text-amber-500" />
+				<div>
+					<div class="weather-pill-label">紫外线</div>
+					<div class="weather-pill-value" data-weather-uv>8</div>
+				</div>
+			</div>
+			<div class="weather-pill">
+				<Icon is:inline name="material-symbols:wb-twilight-rounded" class="weather-pill-icon text-amber-500" />
+				<div>
+					<div class="weather-pill-label">日出</div>
+					<div class="weather-pill-value" data-weather-sunrise>06:02</div>
+				</div>
+			</div>
+			<div class="weather-pill">
+				<Icon is:inline name="material-symbols:wb-twilight-rounded" class="weather-pill-icon text-orange-500" />
+				<div>
+					<div class="weather-pill-label">日落</div>
+					<div class="weather-pill-value" data-weather-sunset>19:17</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="mt-4 rounded-2xl bg-rose-50 px-3 py-2 text-xs leading-relaxed text-rose-600 dark:bg-rose-950/20 dark:text-rose-300">
+			<div class="mb-1 font-bold">污染物浓度</div>
+			<div class="grid grid-cols-3 gap-x-2 gap-y-1">
+				<span>PM2.5: <b data-weather-pm25>23</b></span>
+				<span>PM10: <b data-weather-pm10>35</b></span>
+				<span>O₃: <b data-weather-o3>94</b></span>
+				<span>NO₂: <b data-weather-no2>4</b></span>
+				<span>SO₂: <b data-weather-so2>4</b></span>
+				<span>CO: <b data-weather-co>--</b></span>
+			</div>
+		</div>
+
+		<div class="mt-3 flex items-center justify-center gap-1.5 text-xs font-bold text-neutral-500 dark:text-neutral-400">
+			<Icon is:inline name="material-symbols:schedule-rounded" aria-hidden="true" />
+			<span data-weather-update>等待 API 接入</span>
+		</div>
+	</div>
+</WidgetLayout>
+
+<style>
+	.weather-temp {
+		font-size: 3rem;
+		font-weight: 900;
+		letter-spacing: -0.08em;
+		color: var(--content);
+	}
+
+	.weather-main-icon {
+		filter: drop-shadow(0 10px 18px color-mix(in oklab, var(--primary) 35%, transparent));
+	}
+
+	.weather-pill {
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+		min-width: 0;
+		border-radius: 999px;
+		padding: 0.55rem 0.7rem;
+		background: color-mix(in oklab, var(--btn-plain-bg-hover) 72%, transparent);
+		transition: background 0.2s ease, transform 0.2s ease;
+	}
+
+	.weather-pill:hover {
+		transform: translateY(-1px);
+		background: color-mix(in oklab, var(--primary) 10%, var(--btn-plain-bg-hover));
+	}
+
+	.weather-pill-icon {
+		flex: 0 0 auto;
+		font-size: 1.25rem;
+	}
+
+	.weather-pill-label {
+		font-size: 0.66rem;
+		font-weight: 700;
+		line-height: 1;
+		color: var(--meta-color);
+	}
+
+	.weather-pill-value {
+		margin-top: 0.2rem;
+		font-size: 0.8rem;
+		font-weight: 800;
+		line-height: 1.1;
+		color: var(--content);
+	}
+</style>
+
+<script is:inline data-swup-ignore-script>
+	(() => {
+		const fallbackWeather = {
+			location: "邵阳市 双清区",
+			temp: 29,
+			text: "晴",
+			high: 33,
+			low: 23,
+			wind: "北风 4级",
+			humidity: 79,
+			feels: 30,
+			pressure: 964,
+			cloud: 77,
+			rainRate: 0,
+			rain: 0,
+			uv: 8,
+			sunrise: "06:02",
+			sunset: "19:17",
+			pm25: 23,
+			pm10: 35,
+			o3: 94,
+			no2: 4,
+			so2: 4,
+			co: "--",
+			updateText: "示例数据，等待 API 接入",
+		};
+
+		function setText(root, selector, value) {
+			const element = root.querySelector(selector);
+			if (element) element.textContent = String(value);
+		}
+
+		function renderWeather(root, weather) {
+			setText(root, "[data-weather-location]", weather.location);
+			setText(root, "[data-weather-temp]", weather.temp);
+			setText(root, "[data-weather-text]", weather.text);
+			setText(root, "[data-weather-high]", weather.high);
+			setText(root, "[data-weather-low]", weather.low);
+			setText(root, "[data-weather-wind]", weather.wind);
+			setText(root, "[data-weather-humidity]", `${weather.humidity}%`);
+			setText(root, "[data-weather-feels]", weather.feels);
+			setText(root, "[data-weather-pressure]", weather.pressure);
+			setText(root, "[data-weather-cloud]", weather.cloud);
+			setText(root, "[data-weather-rain-rate]", weather.rainRate);
+			setText(root, "[data-weather-rain]", weather.rain);
+			setText(root, "[data-weather-uv]", weather.uv);
+			setText(root, "[data-weather-sunrise]", weather.sunrise);
+			setText(root, "[data-weather-sunset]", weather.sunset);
+			setText(root, "[data-weather-pm25]", weather.pm25);
+			setText(root, "[data-weather-pm10]", weather.pm10);
+			setText(root, "[data-weather-o3]", weather.o3);
+			setText(root, "[data-weather-no2]", weather.no2);
+			setText(root, "[data-weather-so2]", weather.so2);
+			setText(root, "[data-weather-co]", weather.co);
+			setText(root, "[data-weather-update]", weather.updateText);
+		}
+
+		async function loadWeather() {
+			document.querySelectorAll("[data-weather-widget]").forEach(async (root) => {
+				const endpoint = root.getAttribute("data-weather-api-endpoint") || "";
+				if (!endpoint) {
+					renderWeather(root, fallbackWeather);
+					return;
+				}
+
+				try {
+					// 在这里接入你的天气接口。
+					// 建议接口由服务端根据访问者 IP 自动定位，不在浏览器里请求定位权限。
+					// 返回字段可以按 fallbackWeather 的结构适配。
+					const response = await fetch(endpoint, { credentials: "omit" });
+					if (!response.ok) throw new Error(`Weather API ${response.status}`);
+					const data = await response.json();
+					renderWeather(root, { ...fallbackWeather, ...data });
+				} catch (error) {
+					console.warn("天气接口加载失败，使用示例数据。", error);
+					renderWeather(root, fallbackWeather);
+				}
+			});
+		}
+
+		loadWeather();
+		document.addEventListener("swup:contentReplaced", loadWeather);
+	})();
+</script>

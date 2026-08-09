@@ -1,0 +1,145 @@
+---
+import WidgetLayout from "@/components/common/WidgetLayout.astro";
+import type { WidgetComponentConfig } from "@/types/config";
+
+interface Props {
+	class?: string;
+	style?: string;
+	widgetConfig?: WidgetComponentConfig;
+}
+
+const { class: className, style, widgetConfig } = Astro.props;
+const customProps = (widgetConfig?.customProps ?? {}) as Record<string, unknown>;
+const apiEndpoint =
+	typeof customProps.apiEndpoint === "string" ? customProps.apiEndpoint : "";
+const showTitle = widgetConfig?.showTitle !== false;
+---
+
+<WidgetLayout
+	name="统计"
+	showTitle={showTitle}
+	id="visit-stats-widget"
+	class={className}
+	style={style}
+>
+	<div
+		class="visit-stats"
+		data-visit-stats
+		data-visit-stats-api-endpoint={apiEndpoint}
+	>
+		<div class="text-center">
+			<div
+				class="visit-stats-total font-mono text-4xl font-black leading-none tracking-tight text-neutral-900 transition dark:text-neutral-50"
+				data-visit-stats-total
+			>
+				1.6K
+			</div>
+			<div class="mt-1 text-sm font-bold text-neutral-500 dark:text-neutral-400">总浏览量</div>
+		</div>
+
+		<div class="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+			<div class="text-center">
+				<div class="font-mono text-2xl font-black text-neutral-900 transition dark:text-neutral-50" data-visit-stats-visits>
+					391
+				</div>
+				<div class="mt-1 text-sm font-bold text-neutral-500 dark:text-neutral-400">访问数</div>
+			</div>
+			<div class="h-10 w-px bg-(--line-color)"></div>
+			<div class="text-center">
+				<div class="font-mono text-2xl font-black text-neutral-900 transition dark:text-neutral-50" data-visit-stats-visitors>
+					268
+				</div>
+				<div class="mt-1 text-sm font-bold text-neutral-500 dark:text-neutral-400">游客数</div>
+			</div>
+		</div>
+
+		<div class="mt-3 text-center text-[0.7rem] font-bold text-neutral-400 dark:text-neutral-500" data-visit-stats-note>
+			等待统计 API 接入
+		</div>
+	</div>
+</WidgetLayout>
+
+<style>
+	.visit-stats-total {
+		text-shadow: 0 10px 22px color-mix(in oklab, var(--primary) 22%, transparent);
+	}
+</style>
+
+<script is:inline data-swup-ignore-script>
+	(() => {
+		function formatCompact(value) {
+			if (value >= 1000) return `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}K`;
+			return String(value);
+		}
+
+		function getLocalVisitorId() {
+			const key = "fireflyLocalVisitorId";
+			let visitorId = localStorage.getItem(key);
+			if (!visitorId) {
+				visitorId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+				localStorage.setItem(key, visitorId);
+			}
+			return visitorId;
+		}
+
+		function setText(root, selector, value) {
+			const element = root.querySelector(selector);
+			if (element) element.textContent = String(value);
+		}
+
+		function renderStats(root, stats, note) {
+			setText(root, "[data-visit-stats-total]", formatCompact(stats.totalViews));
+			setText(root, "[data-visit-stats-visits]", stats.visits);
+			setText(root, "[data-visit-stats-visitors]", stats.visitors);
+			setText(root, "[data-visit-stats-note]", note);
+		}
+
+		function getLocalStats() {
+			const viewKey = "fireflyLocalPageViews";
+			const visitKey = "fireflyLocalVisits";
+			const visitorId = getLocalVisitorId();
+			const pageViews = Number(localStorage.getItem(viewKey) || "1580") + 1;
+			const visits = Number(localStorage.getItem(visitKey) || "390") + 1;
+			localStorage.setItem(viewKey, String(pageViews));
+			localStorage.setItem(visitKey, String(visits));
+
+			return {
+				totalViews: pageViews,
+				visits,
+				visitors: visitorId ? 268 : 267,
+			};
+		}
+
+		async function loadVisitStats() {
+			document.querySelectorAll("[data-visit-stats]").forEach(async (root) => {
+				const endpoint = root.getAttribute("data-visit-stats-api-endpoint") || "";
+				if (!endpoint) {
+					renderStats(root, getLocalStats(), "本地示例统计，等待 API 接入");
+					return;
+				}
+
+				try {
+					// 在这里接入你的访问统计接口。
+					// 建议接口返回：{ totalViews: number, visits: number, visitors: number }
+					const response = await fetch(endpoint, {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							pathname: window.location.pathname,
+							referrer: document.referrer,
+						}),
+					});
+					if (!response.ok) throw new Error(`Visit stats API ${response.status}`);
+					const data = await response.json();
+					renderStats(root, data, "实时统计");
+				} catch (error) {
+					console.warn("浏览统计接口加载失败，使用本地示例统计。", error);
+					renderStats(root, getLocalStats(), "统计接口异常，已使用本地示例");
+				}
+			});
+		}
+
+		loadVisitStats();
+		document.addEventListener("swup:contentReplaced", loadVisitStats);
+	})();
+</script>

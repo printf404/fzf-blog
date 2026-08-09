@@ -4,6 +4,8 @@ import Advertisement from "@/components/widget/Advertisement.astro";
 import Announcement from "@/components/widget/Announcement.astro";
 import Calendar from "@/components/widget/Calendar.astro";
 import Categories from "@/components/widget/Categories.astro";
+import DailyQuote from "@/components/widget/DailyQuote.astro";
+import DateProgress from "@/components/widget/DateProgress.astro";
 import Dynamic from "@/components/widget/Dynamic.astro";
 import Music from "@/components/widget/Music.astro";
 import Profile from "@/components/widget/Profile.astro";
@@ -11,6 +13,9 @@ import SidebarTOC from "@/components/widget/SidebarTOC.astro";
 import SiteInfo from "@/components/widget/SiteInfo.astro";
 import SiteStats from "@/components/widget/SiteStats.astro";
 import Tags from "@/components/widget/Tags.astro";
+import TimeGreeting from "@/components/widget/TimeGreeting.astro";
+import VisitStats from "@/components/widget/VisitStats.astro";
+import WeatherForecast from "@/components/widget/WeatherForecast.astro";
 import { sidebarLayoutConfig } from "@/config";
 import type {
 	MobileBottomComponentConfig,
@@ -53,6 +58,11 @@ const componentMap = {
 	music: Music,
 	siteInfo: SiteInfo,
 	dynamic: Dynamic,
+	timeGreeting: TimeGreeting,
+	weatherForecast: WeatherForecast,
+	dateProgress: DateProgress,
+	dailyQuote: DailyQuote,
+	visitStats: VisitStats,
 };
 
 // 获取侧边栏位置

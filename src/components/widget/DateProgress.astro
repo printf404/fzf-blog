@@ -1,0 +1,215 @@
+---
+import type { WidgetComponentConfig } from "@/types/config";
+
+interface Props {
+	class?: string;
+	style?: string;
+	widgetConfig?: WidgetComponentConfig;
+}
+
+const { class: className, style, widgetConfig } = Astro.props;
+const customProps = (widgetConfig?.customProps ?? {}) as Record<string, unknown>;
+const festivalName =
+	typeof customProps.festivalName === "string" ? customProps.festivalName : "中秋";
+const festivalDate =
+	typeof customProps.festivalDate === "string"
+		? customProps.festivalDate
+		: "2026-09-25";
+---
+
+<section
+	class:list={["card-base", "date-progress-widget", "p-4", className]}
+	style={style}
+	data-date-progress-widget
+	data-festival-name={festivalName}
+	data-festival-date={festivalDate}
+>
+	<div class="mb-4 text-center text-sm font-bold text-neutral-800 transition dark:text-neutral-100">
+		<span data-date-progress-current>2026年8月9日 周日</span>
+	</div>
+
+	<div class="space-y-3.5">
+		<div class="date-progress-row">
+			<div class="date-progress-percent" data-progress-year-percent>60.5%</div>
+			<div class="min-w-0 flex-1">
+				<div class="date-progress-label">本年还剩 <span data-progress-year-left>144</span> 天</div>
+				<div class="date-progress-track">
+					<div class="date-progress-bar" data-progress-year-bar style="width: 60.5%"></div>
+				</div>
+			</div>
+		</div>
+		<div class="date-progress-row">
+			<div class="date-progress-percent" data-progress-month-percent>29.0%</div>
+			<div class="min-w-0 flex-1">
+				<div class="date-progress-label">本月还剩 <span data-progress-month-left>22</span> 天</div>
+				<div class="date-progress-track">
+					<div class="date-progress-bar" data-progress-month-bar style="width: 29%"></div>
+				</div>
+			</div>
+		</div>
+		<div class="date-progress-row">
+			<div class="date-progress-percent" data-progress-week-percent>100.0%</div>
+			<div class="min-w-0 flex-1">
+				<div class="date-progress-label">本周还剩 <span data-progress-week-left>0</span> 天</div>
+				<div class="date-progress-track">
+					<div class="date-progress-bar" data-progress-week-bar style="width: 100%"></div>
+				</div>
+			</div>
+		</div>
+		<div class="date-progress-row">
+			<div class="date-progress-percent" data-progress-day-percent>50.0%</div>
+			<div class="min-w-0 flex-1">
+				<div class="date-progress-label">今日还剩 <span data-progress-day-left>12</span> 小时</div>
+				<div class="date-progress-track">
+					<div class="date-progress-bar" data-progress-day-bar style="width: 50%"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="mt-5 border-t border-(--line-color) pt-4 text-center">
+		<div class="text-base font-black text-neutral-800 transition dark:text-neutral-100">
+			距离<span data-festival-name>{festivalName}</span>
+		</div>
+		<div
+			class="date-progress-festival-days mt-1 font-mono text-5xl font-black leading-none text-(--primary)"
+			data-festival-days
+		>
+			47
+		</div>
+		<div class="mt-1 text-sm font-bold text-neutral-500 dark:text-neutral-400" data-festival-date>
+			{festivalDate}
+		</div>
+	</div>
+</section>
+
+<style>
+	.date-progress-row {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.date-progress-percent {
+		width: 3.25rem;
+		flex: 0 0 auto;
+		font-size: 0.95rem;
+		font-weight: 900;
+		color: var(--primary);
+		opacity: 0.8;
+	}
+
+	.date-progress-label {
+		margin-bottom: 0.45rem;
+		font-size: 0.9rem;
+		font-weight: 800;
+		color: var(--content);
+	}
+
+	.date-progress-track {
+		height: 0.55rem;
+		overflow: hidden;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--line-color) 55%, transparent);
+	}
+
+	.date-progress-bar {
+		height: 100%;
+		border-radius: inherit;
+		background: linear-gradient(90deg, color-mix(in oklab, var(--primary) 72%, white), var(--primary));
+		transition: width 0.45s ease;
+	}
+
+	.date-progress-festival-days {
+		text-shadow: 0 10px 24px color-mix(in oklab, var(--primary) 32%, transparent);
+	}
+</style>
+
+<script is:inline data-swup-ignore-script>
+	(() => {
+		const weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+
+		function clampPercent(value) {
+			return Math.max(0, Math.min(100, value));
+		}
+
+		function startOfDay(date) {
+			return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+		}
+
+		function daysBetween(start, end) {
+			const oneDay = 24 * 60 * 60 * 1000;
+			return Math.ceil((startOfDay(end).getTime() - startOfDay(start).getTime()) / oneDay);
+		}
+
+		function setText(root, selector, value) {
+			const element = root.querySelector(selector);
+			if (element) element.textContent = String(value);
+		}
+
+		function setProgress(root, key, percent, left) {
+			setText(root, `[data-progress-${key}-percent]`, `${percent.toFixed(1)}%`);
+			setText(root, `[data-progress-${key}-left]`, left);
+			const bar = root.querySelector(`[data-progress-${key}-bar]`);
+			if (bar) bar.style.width = `${clampPercent(percent)}%`;
+		}
+
+		function updateDateProgress() {
+			document.querySelectorAll("[data-date-progress-widget]").forEach((root) => {
+				const now = new Date();
+				const year = now.getFullYear();
+				const month = now.getMonth();
+				const date = now.getDate();
+				setText(
+					root,
+					"[data-date-progress-current]",
+					`${year}年${month + 1}月${date}日 ${weekdays[now.getDay()]}`,
+				);
+
+				const yearStart = new Date(year, 0, 1);
+				const nextYearStart = new Date(year + 1, 0, 1);
+				const yearTotal = daysBetween(yearStart, nextYearStart);
+				const yearPassed = daysBetween(yearStart, now);
+				setProgress(
+					root,
+					"year",
+					(yearPassed / yearTotal) * 100,
+					Math.max(0, yearTotal - yearPassed),
+				);
+
+				const monthStart = new Date(year, month, 1);
+				const nextMonthStart = new Date(year, month + 1, 1);
+				const monthTotal = daysBetween(monthStart, nextMonthStart);
+				const monthPassed = daysBetween(monthStart, now);
+				setProgress(
+					root,
+					"month",
+					(monthPassed / monthTotal) * 100,
+					Math.max(0, monthTotal - monthPassed),
+				);
+
+				const weekDay = now.getDay();
+				const mondayOffset = weekDay === 0 ? -6 : 1 - weekDay;
+				const weekStart = new Date(year, month, date + mondayOffset);
+				const weekPassed = daysBetween(weekStart, now) + 1;
+				setProgress(root, "week", (weekPassed / 7) * 100, Math.max(0, 7 - weekPassed));
+
+				const minutesPassed = now.getHours() * 60 + now.getMinutes();
+				const dayPercent = (minutesPassed / (24 * 60)) * 100;
+				const hoursLeft = Math.max(0, 24 - now.getHours() - (now.getMinutes() > 0 ? 1 : 0));
+				setProgress(root, "day", dayPercent, hoursLeft);
+
+				const festivalDate = root.getAttribute("data-festival-date") || "";
+				const festival = festivalDate ? new Date(`${festivalDate}T00:00:00`) : null;
+				if (festival && !Number.isNaN(festival.getTime())) {
+					setText(root, "[data-festival-days]", Math.max(0, daysBetween(now, festival)));
+					setText(root, "[data-festival-date]", festivalDate);
+				}
+			});
+		}
+
+		updateDateProgress();
+		window.setInterval(updateDateProgress, 60 * 1000);
+		document.addEventListener("swup:contentReplaced", updateDateProgress);
+	})();
+</script>

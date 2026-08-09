@@ -1,0 +1,125 @@
+---
+import { Icon } from "astro-icon/components";
+import WidgetLayout from "@/components/common/WidgetLayout.astro";
+import type { WidgetComponentConfig } from "@/types/config";
+
+interface Props {
+	class?: string;
+	style?: string;
+	widgetConfig?: WidgetComponentConfig;
+}
+
+type QuoteItem = {
+	text: string;
+	author?: string;
+};
+
+const { class: className, style, widgetConfig } = Astro.props;
+const customProps = (widgetConfig?.customProps ?? {}) as Record<string, unknown>;
+const configuredQuotes = Array.isArray(customProps.quotes)
+	? (customProps.quotes as QuoteItem[])
+	: [];
+const quotes: QuoteItem[] =
+	configuredQuotes.length > 0
+		? configuredQuotes
+		: [
+				{ text: "人生最大的幸福，是发现自己爱的人正好也爱着自己。", author: "张爱玲" },
+				{ text: "凡是过往，皆为序章。", author: "莎士比亚" },
+				{ text: "保持热爱，奔赴山海。", author: "佚名" },
+				{ text: "慢慢来，比较快。", author: "佚名" },
+			];
+const showTitle = widgetConfig?.showTitle !== false;
+---
+
+<WidgetLayout
+	name="今日一言"
+	showTitle={showTitle}
+	id="daily-quote-widget"
+	class={className}
+	style={style}
+>
+	<div class="daily-quote" data-daily-quote data-quotes={JSON.stringify(quotes)}>
+		<div class="mb-3 flex items-center gap-2 text-(--primary)">
+			<Icon
+				is:inline
+				name="material-symbols:auto-awesome-rounded"
+				class="text-2xl"
+				aria-hidden="true"
+			/>
+			<span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+			<span class="h-1.5 w-1.5 rounded-full bg-current opacity-60"></span>
+		</div>
+
+		<blockquote class="relative px-2">
+			<Icon
+				is:inline
+				name="material-symbols:format-quote-rounded"
+				class="daily-quote-mark daily-quote-mark-start"
+				aria-hidden="true"
+			/>
+			<p
+				class="daily-quote-text text-sm font-bold italic leading-7 text-neutral-800 transition dark:text-neutral-100"
+				data-daily-quote-text
+			>
+				人生最大的幸福，是发现自己爱的人正好也爱着自己。
+			</p>
+			<Icon
+				is:inline
+				name="material-symbols:format-quote-rounded"
+				class="daily-quote-mark daily-quote-mark-end"
+				aria-hidden="true"
+			/>
+			<footer class="mt-3 text-right text-xs font-bold text-neutral-500 dark:text-neutral-400">
+				—— <span data-daily-quote-author>张爱玲</span>
+			</footer>
+		</blockquote>
+	</div>
+</WidgetLayout>
+
+<style>
+	.daily-quote-mark {
+		position: absolute;
+		color: color-mix(in oklab, var(--primary) 50%, transparent);
+		font-size: 1.25rem;
+	}
+
+	.daily-quote-mark-start {
+		top: -0.35rem;
+		left: -0.25rem;
+		transform: rotate(180deg);
+	}
+
+	.daily-quote-mark-end {
+		right: -0.25rem;
+		bottom: 1.65rem;
+	}
+</style>
+
+<script is:inline data-swup-ignore-script>
+	(() => {
+		function updateDailyQuote() {
+			document.querySelectorAll("[data-daily-quote]").forEach((root) => {
+				let quotes = [];
+				try {
+					quotes = JSON.parse(root.getAttribute("data-quotes") || "[]");
+				} catch {
+					quotes = [];
+				}
+				if (!quotes.length) return;
+
+				const todayKey = new Date().toISOString().slice(0, 10);
+				let seed = 0;
+				for (const char of todayKey) seed += char.charCodeAt(0);
+				const quote = quotes[seed % quotes.length];
+
+				const text = root.querySelector("[data-daily-quote-text]");
+				const author = root.querySelector("[data-daily-quote-author]");
+				if (text) text.textContent = quote.text || "";
+				if (author) author.textContent = quote.author || "佚名";
+			});
+		}
+
+		updateDailyQuote();
+		document.addEventListener("swup:contentReplaced", updateDailyQuote);
+	})();
+</script>

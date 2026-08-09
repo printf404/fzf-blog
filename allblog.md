@@ -87,7 +87,7 @@ fzf-blog/
 │   │   │   └── PostCard.astro                    # 单篇文章卡片，列表模式下一篇文章占一整行
 │   │   ├── misc/                                 # 杂项辅助组件
 │   │   ├── pages/                                # 特定页面专用组件
-│   │   ├── widget/                               # 侧边栏小部件组件
+│   │   ├── widget/                               # 侧边栏小部件组件，包含问候、天气、日期、一言、统计等模块
 │   │   └── README.md                             # 组件目录分类说明
 │   ├── config/                                   # 站点配置目录，详见 src/config/README.md
 │   │   ├── FooterConfig.html                     # 页脚自定义 HTML 片段
@@ -332,6 +332,8 @@ fzf-blog/
 更详细的配置说明见 `src/config/README.md`。新增配置文件建议使用 `camelCaseConfig.ts` 命名，并从 `src/config/index.ts` 统一导出。
 
 `src/config/sidebarConfig.ts` 中的 `position: "both"` 保持两套侧边栏配置，`leftComponents` 和 `rightComponents` 仍然独立控制各自组件。当前 `desktopSidebarPlacement: "left"` 表示大屏下将两列侧边栏都放在正文左侧，形成“左侧栏组件列 + 右侧栏组件列 + 正文”的布局；平板和移动端仍按响应式规则显示，不会把两列侧边栏合并成单列。
+
+当前新增的侧边栏模块集中放在 `src/components/widget/`：`TimeGreeting.astro` 是带时间和图片预留位的问候卡片，`WeatherForecast.astro` 是可展开/收起的天气预报卡片，`DateProgress.astro` 是日期进度与节日倒计时，`DailyQuote.astro` 是今日一言，`VisitStats.astro` 是浏览数据统计。图片链接、天气 API、浏览统计 API、节日日期和句子库都在 `src/config/sidebarConfig.ts` 对应组件的 `customProps` 中修改。
 
 首页文章列表由 `src/config/siteConfig.ts` 的 `postListLayout` 控制。当前默认使用 `defaultMode: "list"` 和 `mobileDefaultMode: "list"`，文章会以一条一条的列表形式显示；`src/components/layout/PostPage.astro` 只在设置面板允许布局切换时读取用户保存的布局偏好，避免旧的网格偏好覆盖默认列表样式。
 
