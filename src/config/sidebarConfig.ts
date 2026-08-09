@@ -181,36 +181,10 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 			},
 		},
 		{
-			// 组件类型：今日一言
-			type: "dailyQuote",
-			// 是否启用该组件
-			enable: true,
-			// 放在日期模块后面
-			position: "top",
-			// 是否在文章详情页显示
-			showOnPostPage: true,
-			customProps: {
-				// 句子库修改位置：
-				// 直接在 quotes 数组里增删句子即可。
-				quotes: [
-					{
-						text: "人生最大的幸福，是发现自己爱的人正好也爱着自己。",
-						author: "张爱玲",
-					},
-					{
-						text: "凡是过往，皆为序章。",
-						author: "莎士比亚",
-					},
-					{
-						text: "保持热爱，奔赴山海。",
-						author: "佚名",
-					},
-					{
-						text: "慢慢来，比较快。",
-						author: "佚名",
-					},
-				],
-			},
+			type: "Everydaysay",  // 必须与 componentMap 的 key 一致
+			enable: true,           // true = 启用，false = 禁用
+			position: "sticky",        // "top" = 固定顶部，"sticky" = 粘性定位
+			showOnPostPage: true,   // 是否在文章详情页显示
 		},
 		{
 			// 组件类型：最新动态组件

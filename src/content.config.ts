@@ -33,6 +33,16 @@ type DynamicData = {
 	location: string;
 };
 
+type EverydaysayItem = {
+	text: string;
+	author: string;
+};
+
+type EverydaysayData = {
+	title: string;
+	everydays: EverydaysayItem[];
+};
+
 type ContentCollection<T> = CollectionConfig<
 	ZodType<T>,
 	ReturnType<typeof glob>
@@ -82,12 +92,34 @@ const dynamicCollection: ContentCollection<DynamicData> = defineCollection({
 	}),
 });
 
+// 每日一言内容集合
+const EveryDaysayCollection: ContentCollection<EverydaysayData> = defineCollection({
+	loader: glob({ pattern: "**/*.md", base: "./src/content/Otherfile" }),
+	schema: z.object({
+		title: z.string(),
+		everydays: z.array(
+			z.object({
+				text: z.string(),
+				author: z.string(),
+			}),
+		),
+	}),
+});
+
+
+
+
+
+
+
 export const collections: {
 	dynamic: typeof dynamicCollection;
 	posts: typeof postsCollection;
 	spec: typeof specCollection;
+	EveryDaysay: typeof EveryDaysayCollection;
 } = {
 	dynamic: dynamicCollection,
 	posts: postsCollection,
 	spec: specCollection,
+	EveryDaysay: EveryDaysayCollection,
 };

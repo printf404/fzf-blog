@@ -14,8 +14,8 @@ export type WidgetComponentType =
 	| "timeGreeting"
 	| "weatherForecast"
 	| "dateProgress"
-	| "dailyQuote"
-	| "visitStats";
+	| "visitStats"
+	| "Everydaysay";
 
 export type WidgetComponentConfig = {
 	type: WidgetComponentType; // 组件类型

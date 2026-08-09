@@ -339,7 +339,7 @@ fzf-blog/
 
 `src/config/sidebarConfig.ts` 中的 `position: "both"` 保持两套侧边栏配置，`leftComponents` 和 `rightComponents` 仍然独立控制各自组件。当前 `desktopSidebarPlacement: "left"` 表示大屏下将两列侧边栏都放在正文左侧，形成“左侧栏组件列 + 右侧栏组件列 + 正文”的布局；平板和移动端仍按响应式规则显示，不会把两列侧边栏合并成单列。
 
-当前新增的侧边栏模块集中放在 `src/components/widget/`：`TimeGreeting.astro` 是带时间和图片预留位的问候卡片，`WeatherForecast.astro` 是可展开/收起的天气预报卡片，`DateProgress.astro` 是日期进度与节日倒计时，`DailyQuote.astro` 是今日一言，`VisitStats.astro` 是浏览数据统计。图片链接、天气 API、浏览统计 API、自定义纪念日和句子库都在 `src/config/sidebarConfig.ts` 对应组件的 `customProps` 中修改。
+当前新增的侧边栏模块集中放在 `src/components/widget/`：`TimeGreeting.astro` 是带时间和图片预留位的问候卡片，`WeatherForecast.astro` 是可展开/收起的天气预报卡片，`DateProgress.astro` 是日期进度与节日倒计时，`Everydaysay.astro` 是今日一言，`VisitStats.astro` 是浏览数据统计。图片链接、天气 API、浏览统计 API 和自定义纪念日都在 `src/config/sidebarConfig.ts` 对应组件的 `customProps` 中修改。
 
 天气模块的前端只请求站内 `/api/weather`，真实和风天气凭据由 `functions/api/weather.ts` 在服务端读取运行时环境变量。Vercel 部署时由根目录 `api/weather.ts` 提供 Serverless Function，因此博客页面仍然是静态构建，只有天气接口是动态的；Cloudflare Workers 静态资源部署时由 `src/cloudflare-worker.ts` 接住 `/api/weather`，其它路径继续交给 `dist` 静态资源。必须配置 `QWEATHER_API_KEY` 和 `QWEATHER_API_HOST`：`QWEATHER_API_KEY` 是项目凭据页里的 API KEY，`QWEATHER_API_HOST` 是和风天气控制台“设置”页里的专属 API Host。Cloudflare 中要把这两个变量加到“变量和密钥/运行时变量”，不要只加到“构建变量”；Vercel 中要加到项目的 Environment Variables。不要把和风天气 Key 或 API Host 写入 `src/config/sidebarConfig.ts`、组件文件或任何 `PUBLIC_` 前缀环境变量；本地开发使用 `.dev.vars` 保存凭据，该文件已被 `.gitignore` 忽略。天气只使用部署平台提供的访问者经纬度自动查询，不设置固定兜底城市；如果平台无法提供位置、位置解析失败或天气接口异常，前端显示“未知/--”，不会展示固定模板城市。
 
@@ -349,7 +349,7 @@ fzf-blog/
 
 日期进度模块已改为自动节日模式。`src/components/widget/DateProgress.astro` 会扫描未来日期，自动匹配常见公历节日和农历节日（如春节、元宵、端午、中秋、重阳等），不再需要每年手动修改中秋日期；如需添加生日或纪念日，在 `src/config/sidebarConfig.ts` 的 `dateProgress.customProps.festivals` 中追加 `{ name: "纪念日", date: "YYYY-MM-DD" }` 即可。
 
-今日一言模块 `DailyQuote.astro` 会从 `dailyQuote.customProps.quotes` 中随机选取句子展示，刷新页面或重新进入页面时可能变化；它不会联网拉取个人信息。想固定某一句或扩充句库，直接维护 `src/config/sidebarConfig.ts` 的 `quotes` 数组即可。
+今日一言模块 `Everydaysay.astro` 会从内容集合 `EveryDaysay` 的 `everyday.md` 中读取句子，并按日期选择当天展示内容；它不会联网拉取个人信息。想固定某一句或扩充句库，直接维护对应内容文件中的 `everydays` 数据即可。
 
 首页文章列表由 `src/config/siteConfig.ts` 的 `postListLayout` 控制。当前默认使用 `defaultMode: "list"` 和 `mobileDefaultMode: "list"`，文章会以一条一条的列表形式显示；`src/components/layout/PostPage.astro` 只在设置面板允许布局切换时读取用户保存的布局偏好，避免旧的网格偏好覆盖默认列表样式。
 
