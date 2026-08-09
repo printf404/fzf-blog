@@ -1,6 +1,6 @@
 type RuntimeEnv = {
 	QWEATHER_API_KEY?: string;
-	QWEATHER_LOCATION?: string;
+	QWEATHER_API_HOST?: string;
 };
 
 type WeatherResult = {
@@ -28,8 +28,6 @@ type WeatherResult = {
 	updateText: string;
 };
 
-const QWEATHER_API_HOST = "https://devapi.qweather.com";
-
 function json(data: unknown, init?: ResponseInit) {
 	return new Response(JSON.stringify(data), {
 		...init,
@@ -41,34 +39,80 @@ function json(data: unknown, init?: ResponseInit) {
 	});
 }
 
-function getClientLocation(request: Request, env: RuntimeEnv): string | null {
+function normalizeApiHost(host: string): string {
+	const trimmed = host.trim().replace(/\/+$/, "");
+	return /^https?:\/\//.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
+function getClientLocation(request: Request): string | null {
 	const cf = (request as Request & { cf?: Record<string, unknown> }).cf;
 	const longitude = typeof cf?.longitude === "string" ? cf.longitude : "";
 	const latitude = typeof cf?.latitude === "string" ? cf.latitude : "";
 	if (longitude && latitude) return `${longitude},${latitude}`;
 
-	return env.QWEATHER_LOCATION || null;
+	return null;
 }
 
-function getDisplayLocation(request: Request): string {
+function getDisplayLocation(request: Request, resolvedLocation?: string): string {
 	const cf = (request as Request & { cf?: Record<string, unknown> }).cf;
 	const city = typeof cf?.city === "string" ? cf.city : "";
 	const region = typeof cf?.region === "string" ? cf.region : "";
-	return [city, region].filter(Boolean).join(" ") || "未知";
+	return [city, region].filter(Boolean).join(" ") || resolvedLocation || "未知";
+}
+
+function isDirectWeatherLocation(location: string): boolean {
+	return /^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(location) || /^\d+$/.test(location);
+}
+
+async function resolveLocation(
+	apiHost: string,
+	location: string,
+	apiKey: string,
+): Promise<{ id: string; displayName?: string } | null> {
+	if (isDirectWeatherLocation(location)) return { id: location };
+
+	const url = new URL("/geo/v2/city/lookup", apiHost);
+	url.searchParams.set("location", location);
+	url.searchParams.set("lang", "zh");
+	url.searchParams.set("range", "cn");
+
+	const response = await fetch(url.toString(), {
+		headers: { "X-QW-Api-Key": apiKey },
+	});
+	if (!response.ok) return null;
+	const data = (await response.json()) as {
+		code?: string;
+		location?: Array<{
+			id?: string;
+			name?: string;
+			adm1?: string;
+			adm2?: string;
+		}>;
+	};
+	if (data.code && data.code !== "200") return null;
+	const matched = data.location?.[0];
+	if (!matched?.id) return null;
+
+	return {
+		id: matched.id,
+		displayName: [matched.name, matched.adm2, matched.adm1].filter(Boolean).join(" "),
+	};
 }
 
 async function fetchQWeather<T>(
+	apiHost: string,
 	pathname: string,
 	location: string,
 	apiKey: string,
 ): Promise<T | null> {
-	const url = new URL(pathname, QWEATHER_API_HOST);
+	const url = new URL(pathname, apiHost);
 	url.searchParams.set("location", location);
-	url.searchParams.set("key", apiKey);
 	url.searchParams.set("lang", "zh");
 	url.searchParams.set("unit", "m");
 
-	const response = await fetch(url.toString());
+	const response = await fetch(url.toString(), {
+		headers: { "X-QW-Api-Key": apiKey },
+	});
 	if (!response.ok) return null;
 	const data = (await response.json()) as T & { code?: string };
 	if (data.code && data.code !== "200") return null;
@@ -77,6 +121,7 @@ async function fetchQWeather<T>(
 
 function normalizeWeather(
 	request: Request,
+	resolvedLocation: string | undefined,
 	nowData: any,
 	dailyData: any,
 	airData: any,
@@ -87,7 +132,7 @@ function normalizeWeather(
 	const obsTime = now.obsTime ? new Date(now.obsTime) : null;
 
 	return {
-		location: getDisplayLocation(request),
+		location: getDisplayLocation(request, resolvedLocation),
 		temp: now.temp ?? "--",
 		text: now.text ?? "--",
 		high: today.tempMax ?? "--",
@@ -132,33 +177,57 @@ export async function onRequest(context: {
 			{ status: 503 },
 		);
 	}
-
-	const location = getClientLocation(context.request, context.env);
-	if (!location) {
+	const apiHost = context.env.QWEATHER_API_HOST;
+	if (!apiHost) {
 		return json(
 			{
-				error: "天气位置未知",
+				error: "QWEATHER_API_HOST 未配置",
 				message:
-					"当前部署环境未提供访问者经纬度，也未配置 QWEATHER_LOCATION，前端将显示未知。",
+					"请在和风天气控制台的“设置”页复制专属 API Host，并配置到部署平台环境变量。",
 			},
 			{ status: 503 },
 		);
 	}
+
+	const rawLocation = getClientLocation(context.request);
+	if (!rawLocation) {
+		return json(
+			{
+				error: "天气位置未知",
+				message:
+					"当前部署环境未提供访问者经纬度，前端将显示未知。",
+			},
+			{ status: 503 },
+		);
+	}
+	const weatherApiHost = normalizeApiHost(apiHost);
+	const location = await resolveLocation(weatherApiHost, rawLocation, apiKey);
+	if (!location) {
+		return json(
+			{
+				error: "天气位置解析失败",
+				message: "访问者位置解析失败，前端将显示未知。",
+			},
+			{ status: 502 },
+		);
+	}
 	const [nowData, dailyData, airData] = await Promise.all([
-		fetchQWeather("/v7/weather/now", location, apiKey),
-		fetchQWeather("/v7/weather/3d", location, apiKey),
-		fetchQWeather("/v7/air/now", location, apiKey),
+		fetchQWeather(weatherApiHost, "/v7/weather/now", location.id, apiKey),
+		fetchQWeather(weatherApiHost, "/v7/weather/3d", location.id, apiKey),
+		fetchQWeather(weatherApiHost, "/v7/air/now", location.id, apiKey),
 	]);
 
 	if (!nowData) {
 		return json(
 			{
 				error: "天气数据获取失败",
-				message: "请检查 QWEATHER_API_KEY、QWEATHER_LOCATION 或和风天气服务状态。",
+				message: "请检查 QWEATHER_API_KEY、QWEATHER_API_HOST 或和风天气服务状态。",
 			},
 			{ status: 502 },
 		);
 	}
 
-	return json(normalizeWeather(context.request, nowData, dailyData, airData));
+	return json(
+		normalizeWeather(context.request, location.displayName, nowData, dailyData, airData),
+	);
 }

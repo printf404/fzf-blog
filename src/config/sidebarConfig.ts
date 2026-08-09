@@ -75,7 +75,8 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 			customProps: {
 				// 天气接口走站内服务端代理，不要把和风天气 Key 写到前端。
 				// 部署时把真实密钥配置到环境变量 QWEATHER_API_KEY。
-				// 可选：QWEATHER_LOCATION 作为无法从访问者 IP 推断城市时的备用位置。
+				// 还需要在和风天气控制台“设置”页复制专属 API Host，配置到 QWEATHER_API_HOST。
+				// 不设置固定兜底城市；无法从访问者请求推断位置时，组件显示未知。
 				apiEndpoint: "/api/weather",
 			},
 		},
