@@ -83,6 +83,8 @@ fzf-blog/
 │   │   ├── controls/                             # 页面导航与交互控件
 │   │   ├── features/                             # 全局功能增强与特效组件
 │   │   ├── layout/                               # 页面布局与结构组件
+│   │   │   ├── PostPage.astro                    # 首页文章列表容器，控制列表/网格布局切换逻辑
+│   │   │   └── PostCard.astro                    # 单篇文章卡片，列表模式下一篇文章占一整行
 │   │   ├── misc/                                 # 杂项辅助组件
 │   │   ├── pages/                                # 特定页面专用组件
 │   │   ├── widget/                               # 侧边栏小部件组件
@@ -329,7 +331,9 @@ fzf-blog/
 
 更详细的配置说明见 `src/config/README.md`。新增配置文件建议使用 `camelCaseConfig.ts` 命名，并从 `src/config/index.ts` 统一导出。
 
-`src/config/sidebarConfig.ts` 中的 `leftComponents` 和 `rightComponents` 仍然是两套独立侧边栏配置。当前 `desktopSidebarPlacement: "left"` 表示大屏下将两套侧边栏都放在正文左侧，形成“左侧栏第一列 + 左侧栏第二列 + 正文”的布局；平板和移动端仍按响应式规则显示，不会把侧边栏混在一起。
+`src/config/sidebarConfig.ts` 中的 `position: "both"` 保持两套侧边栏配置，`leftComponents` 和 `rightComponents` 仍然独立控制各自组件。当前 `desktopSidebarPlacement: "left"` 表示大屏下将两列侧边栏都放在正文左侧，形成“左侧栏组件列 + 右侧栏组件列 + 正文”的布局；平板和移动端仍按响应式规则显示，不会把两列侧边栏合并成单列。
+
+首页文章列表由 `src/config/siteConfig.ts` 的 `postListLayout` 控制。当前默认使用 `defaultMode: "list"` 和 `mobileDefaultMode: "list"`，文章会以一条一条的列表形式显示；`src/components/layout/PostPage.astro` 只在设置面板允许布局切换时读取用户保存的布局偏好，避免旧的网格偏好覆盖默认列表样式。
 
 ### `src/assets` 与 `public`
 
@@ -368,5 +372,6 @@ fzf-blog/
 - `tsconfig.json` 中的路径别名都指向 `src` 体系，调整目录后需要同步修改别名和 import。
 - `src/config/` 和 `src/types/` 应保持对应关系，新增配置时不要只改配置文件。
 - 侧边栏布局由 `src/config/sidebarConfig.ts` 和 `src/utils/responsive-utils.ts` 共同控制；调整侧边栏位置时，应同步检查大屏、平板和移动端显示效果。
+- 首页文章列表样式由 `src/config/siteConfig.ts`、`src/components/layout/PostPage.astro` 和 `src/components/layout/PostCard.astro` 共同控制；如果希望始终保持“一条一条”的样式，应保持 `postListLayout.defaultMode` 为 `list`。
 - `.astro/`、`dist/`、`node_modules/` 不需要人工整理，也不应提交到结构文档主体中。
 - 图片、模型、音频和字体等二进制资源可以按目录概括说明，不建议在文档中逐个列出每个素材文件。

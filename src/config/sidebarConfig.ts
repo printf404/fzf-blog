@@ -10,7 +10,7 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 	// 侧边栏位置：
 	// left: 仅显示左侧边栏
 	// right: 仅显示右侧边栏
-	// both: 双侧边栏，1280px以上同时显示左右，769-1279px根据tabletSidebar配置显示其中一侧
+	// both: 保持两套侧边栏配置，1280px以上同时显示两列，769-1279px根据tabletSidebar配置显示其中一侧
 	position: "both",
 
 	// 平板端(769-1279px)显示哪侧侧边栏，仅position为both时生效
@@ -20,7 +20,7 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 
 	// 桌面端双侧栏摆放方式，仅position为both时生效
 	// split: 左右分布，布局为 [左侧栏 + 正文 + 右侧栏]
-	// left: 两列侧边栏都放在正文左侧，布局为 [左侧栏 + 右侧栏组件列 + 正文]
+	// left: 两列侧边栏都放在正文左侧，布局为 [左侧栏组件列 + 右侧栏组件列 + 正文]
 	desktopSidebarPlacement: "left",
 
 	// 文章详情页隐藏侧边栏，设为 true 则只在首页等非文章页显示
