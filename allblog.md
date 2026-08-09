@@ -66,6 +66,8 @@ fzf-blog/
 ├── functions/                                    # 部署平台服务端函数目录，不放前端密钥
 │   └── api/
 │       └── weather.ts                            # 天气服务端代理，读取 QWEATHER_API_KEY 后请求和风天气
+├── api/
+│   └── weather.ts                                # Vercel 原生 Serverless Function，转发 /api/weather 到天气代理逻辑
 ├── src/cloudflare-worker.ts                       # Cloudflare Workers 静态资源部署入口，转发 /api/weather 并托管 dist
 ├── scripts/                                      # 项目自动化脚本
 │   ├── generate-lqips.ts                         # 生成低质量图片占位数据
@@ -339,7 +341,7 @@ fzf-blog/
 
 当前新增的侧边栏模块集中放在 `src/components/widget/`：`TimeGreeting.astro` 是带时间和图片预留位的问候卡片，`WeatherForecast.astro` 是可展开/收起的天气预报卡片，`DateProgress.astro` 是日期进度与节日倒计时，`DailyQuote.astro` 是今日一言，`VisitStats.astro` 是浏览数据统计。图片链接、天气 API、浏览统计 API、自定义纪念日和句子库都在 `src/config/sidebarConfig.ts` 对应组件的 `customProps` 中修改。
 
-天气模块的前端只请求站内 `/api/weather`，真实和风天气凭据由 `functions/api/weather.ts` 在服务端读取环境变量。Cloudflare Workers 静态资源部署时由 `src/cloudflare-worker.ts` 接住 `/api/weather`，其它路径继续交给 `dist` 静态资源。必须配置 `QWEATHER_API_KEY` 和 `QWEATHER_API_HOST`：`QWEATHER_API_KEY` 是项目凭据页里的 API KEY，`QWEATHER_API_HOST` 是和风天气控制台“设置”页里的专属 API Host。不要把和风天气 Key 或 API Host 写入 `src/config/sidebarConfig.ts`、组件文件或任何 `PUBLIC_` 前缀环境变量；本地开发使用 `.dev.vars` 保存凭据，该文件已被 `.gitignore` 忽略。天气只使用部署平台提供的访问者经纬度自动查询，不设置固定兜底城市；如果平台无法提供位置、位置解析失败或天气接口异常，前端显示“未知/--”，不会展示固定模板城市。
+天气模块的前端只请求站内 `/api/weather`，真实和风天气凭据由 `functions/api/weather.ts` 在服务端读取环境变量。Vercel 部署时由根目录 `api/weather.ts` 提供 Serverless Function，因此博客页面仍然是静态构建，只有天气接口是动态的；Cloudflare Workers 静态资源部署时由 `src/cloudflare-worker.ts` 接住 `/api/weather`，其它路径继续交给 `dist` 静态资源。必须配置 `QWEATHER_API_KEY` 和 `QWEATHER_API_HOST`：`QWEATHER_API_KEY` 是项目凭据页里的 API KEY，`QWEATHER_API_HOST` 是和风天气控制台“设置”页里的专属 API Host。不要把和风天气 Key 或 API Host 写入 `src/config/sidebarConfig.ts`、组件文件或任何 `PUBLIC_` 前缀环境变量；本地开发使用 `.dev.vars` 保存凭据，该文件已被 `.gitignore` 忽略。天气只使用部署平台提供的访问者经纬度自动查询，不设置固定兜底城市；如果平台无法提供位置、位置解析失败或天气接口异常，前端显示“未知/--”，不会展示固定模板城市。
 
 浏览统计模块 `VisitStats.astro` 通过 `src/config/sidebarConfig.ts` 中的 `visitStats.customProps` 接入统计服务。当前配置使用 Waline 的 `/api/article` 按当前页面路径读取浏览量，因此会随真实访问数据变化；如果未配置接口、接口异常或统计服务不可用，组件显示“-- / 统计数据未知”，不会再使用本地示例浏览量、示例访问数或示例访客数，避免把模板数据误认为真实站点数据。
 

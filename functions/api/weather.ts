@@ -50,13 +50,23 @@ function getClientLocation(request: Request): string | null {
 	const latitude = typeof cf?.latitude === "string" ? cf.latitude : "";
 	if (longitude && latitude) return `${longitude},${latitude}`;
 
+	const vercelLongitude = request.headers.get("x-vercel-ip-longitude") || "";
+	const vercelLatitude = request.headers.get("x-vercel-ip-latitude") || "";
+	if (vercelLongitude && vercelLatitude) return `${vercelLongitude},${vercelLatitude}`;
+
 	return null;
 }
 
 function getDisplayLocation(request: Request, resolvedLocation?: string): string {
 	const cf = (request as Request & { cf?: Record<string, unknown> }).cf;
-	const city = typeof cf?.city === "string" ? cf.city : "";
-	const region = typeof cf?.region === "string" ? cf.region : "";
+	const cfCity = typeof cf?.city === "string" ? cf.city : "";
+	const cfRegion = typeof cf?.region === "string" ? cf.region : "";
+	const vercelCity = decodeURIComponent(request.headers.get("x-vercel-ip-city") || "");
+	const vercelRegion = decodeURIComponent(
+		request.headers.get("x-vercel-ip-country-region") || "",
+	);
+	const city = cfCity || vercelCity;
+	const region = cfRegion || vercelRegion;
 	return [city, region].filter(Boolean).join(" ") || resolvedLocation || "未知";
 }
 
