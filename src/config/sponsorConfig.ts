@@ -2,10 +2,10 @@ import type { SponsorConfig } from "../types/sponsorConfig";
 
 export const sponsorConfig: SponsorConfig = {
 	// 页面标题，如果留空则使用 i18n 中的翻译
-	title: "",
+	title: "打赏",
 
 	// 页面描述文本，如果留空则使用 i18n 中的翻译
-	description: "",
+	description: "感谢您的支持！",
 
 	// 打赏用途说明
 	usage:
@@ -26,15 +26,15 @@ export const sponsorConfig: SponsorConfig = {
 			name: "支付宝",
 			icon: "fa7-brands:alipay",
 			// 收款码图片路径（需要放在 public 目录下）
-			qrCode: "/assets/images/sponsor/alipay.png",
+			qrCode: "",
 			link: "",
 			description: "使用 支付宝 扫码打赏",
-			enabled: true,
+			enabled: false,
 		},
 		{
 			name: "微信",
 			icon: "fa7-brands:weixin",
-			qrCode: "/assets/images/sponsor/wechat.png",
+			qrCode: "/assets/images/sponsor/weixing.jpg",
 			link: "",
 			description: "使用 微信 扫码打赏",
 			enabled: true,
@@ -43,17 +43,17 @@ export const sponsorConfig: SponsorConfig = {
 			name: "ko-fi",
 			icon: "simple-icons:kofi",
 			qrCode: "",
-			link: "https://ko-fi.com/cuteleaf",
-			description: "Buy a Coffee for Firefly",
-			enabled: true,
+			link: "",
+			description: "通过 Ko-fi 进行打赏",
+			enabled: false,
 		},
 		{
 			name: "爱发电",
 			icon: "simple-icons:afdian",
 			qrCode: "",
-			link: "https://ifdian.net/a/cuteleaf",
+			link: "",
 			description: "通过 爱发电 进行打赏",
-			enabled: true,
+			enabled: false,
 		},
 	],
 
@@ -61,19 +61,16 @@ export const sponsorConfig: SponsorConfig = {
 	sponsors: [
 		// 示例：已实名打赏者
 		{
-			name: "夏叶",
-			avatar:
-				"https://weavatar.com/avatar/d252655d40d6874417a720bad0a6c5f77f8f6a1fd2f882f8f338402dc37e4190?s=640",
-			amount: "¥50",
-			date: "2025-10-01",
+			name: "委员长",
+			avatar: "https://tu.202685.xyz/file/1786086160577_委员长.webp",
+			amount: "1.2万亿金圆券",
+			date: "1949-12-10",
 		},
-
-		// 示例：匿名打赏者
 		{
-			name: "匿名用户",
-			// avatar: "",
-			amount: "¥20",
-			date: "2025-10-01",
+			name: "邪恶的冰岛入",
+			avatar: "https://tu.202685.xyz/file/1786086177599_冰岛入.webp",
+			amount: "抢走了我10个亿",
+			date: "1939-9-10",
 		},
 	],
 };

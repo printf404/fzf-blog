@@ -5,7 +5,7 @@ import type { FriendLink, FriendsPageConfig } from "../types/friendsConfig";
 // 友链页面配置
 export const friendsPageConfig: FriendsPageConfig = {
 	// 页面标题，如果留空则使用 i18n 中的翻译
-	title: "",
+	title: "FriendsConfig",
 
 	// 页面描述文本，如果留空则使用 i18n 中的翻译
 	description: "",

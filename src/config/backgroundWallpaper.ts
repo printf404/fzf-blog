@@ -2,7 +2,7 @@ import type { BackgroundWallpaperConfig } from "@/types/backgroundWallpaper";
 
 export const backgroundWallpaper: BackgroundWallpaperConfig = {
 	// 壁纸模式："banner" 横幅壁纸，"fullscreen" 全屏壁纸，"overlay" 全屏透明，"none" 纯色背景无壁纸
-	mode: "banner",
+	mode: "overlay",
 	// 是否启用背景视频播放，配置后将在导航栏显示视频播放按钮
 	playerEnable: true,
 	/**
@@ -55,12 +55,14 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 			"assets/images/MobileWallpaper/m4.avif",
 			"assets/images/MobileWallpaper/m5.avif",
 			"assets/images/MobileWallpaper/m6.avif",
+			"assets/images/MobileWallpaper/m7.avif",
+			"assets/images/MobileWallpaper/m8.avif",
 		],
 		// 背景视频播放地址
 		// 支持单个视频路径（字符串）或多个视频循环（数组，参考上面壁纸配置）
 		// 支持远程视频URL，本地视频请放在 public/assets/videos/ 目录下
 		// playerUrl: "/assets/videos/firefly.mp4",
-		playerUrl: "https://bed.twoleaf.cn/file/1785658612716_firefly.mp4",
+		playerUrl: "https://tu.202685.xyz/file/1785944291419_114.mp4",
 	},
 	// 横幅壁纸和全屏壁纸共享配置
 	common: {
@@ -73,17 +75,45 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 			// 是否启用主页横幅文字
 			enable: true,
 			// 主页横幅主标题
-			title: "Lovely firefly!",
+			title: "Sturm und Drang!",
 			// 主页横幅主标题字体大小
-			titleSize: "4.5rem",
+			titleSize: "3.5rem",
 			// 主页横幅副标题
 			subtitle: [
-				"In Reddened Chrysalis, I Once Rest",
-				"From Shattered Sky, I Free Fall",
-				"Amidst Silenced Stars, I Deep Sleep",
-				"Upon Lighted Fyrefly, I Soon Gaze",
-				"From Undreamt Night, I Thence Shine",
-				"In Finalized Morrow, I Full Bloom",
+				"为何拼杀,为何赴死?",
+				"WE SHALL NEVER SURRENDER! ——— 温斯顿·丘吉尔",
+				"扬基歌,奏起!",
+				"众人之上,强者之列",
+				"命运眷顾勇者",
+				"力量换取和平",
+				"生有涯,艺无涯!",
+				"望胜者实至名归",
+				"投票者什么都无法决定,计票者才决定一切 ——— 约瑟夫·斯大林",
+				"规则不一定是神圣的,原则才是 ——— 富兰克林·罗斯福",
+				"宁做一日之狮，不做百世羔羊 ——— 贝尼托·墨索里尼",
+				"教皇，他有几个师？——— 约瑟夫·斯大林",
+				"我带来了一代人的和平 —— 内维尔·张伯伦",
+				"我不想要和平，我要胜利 —— 温斯顿·丘吉尔",
+				"如果有一架飞机飞过鲁尔，你们就可以叫我迈耶 —— 赫尔曼·迈耶",
+				"为有牺牲多壮志，敢叫日月换新天",
+				"我们必须咬紧牙关，全力以赴去做一件事；否则，我们将一事无成 ―― 阿道夫·希特勒",
+				"你的名字无人知晓，你的功绩永世长存",
+				"沙场秋点兵",
+				"再累也不能倒下",
+				"翼載光荣，同志!",
+				"醉生梦死",
+				"看啊看啊，这是谁来了？",
+				"首屈一指",
+				"义重如山岳，死轻如鸿毛",
+				"兵犹火也，不戢自焚",
+				"我发现你缺乏专注",
+				"来日再会",
+				"精美绝伦",
+				"再次向突破口冲锋！",
+				"英灵殿再见",
+				"生死荣辱",
+				"胜券在握！",
+				"你的名字我记下了",
 			],
 			// 主页横幅副标题字体大小
 			subtitleSize: "1.5rem",
@@ -93,21 +123,21 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 				// 打字机关闭 → 每次刷新随机显示一条副标题
 				enable: true,
 				// 打字速度（毫秒）
-				speed: 100,
+				speed: 90,
 				// 删除速度（毫秒）
 				deleteSpeed: 50,
 				// 完全显示后的暂停时间（毫秒）
-				pauseTime: 2000,
+				pauseTime: 5000,
 			},
 		},
 		// 文章横幅信息："description" 显示描述，"meta" 显示日期、字数和阅读时长
 		postInfo: {
-			mode: "description",
+			mode: "meta",
 		},
 		// 导航栏配置
 		navbar: {
 			// 导航栏透明模式："semi" 半透明，"full" 完全透明，"semifull" 动态透明
-			transparentMode: "semi",
+			transparentMode: "full",
 			// 毛玻璃模糊度，0 即关闭导航栏的毛玻璃
 			// 注意：导航栏子菜单与浮动面板始终保留毛玻璃，模糊度跟随此项但有最小值
 			blur: 5,
@@ -158,7 +188,7 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 		// 背景模糊度
 		blur: 10,
 		// 卡片透明度，0-1之间，值越小越透明
-		cardOpacity: 0.5,
+		cardOpacity: 0.3,
 	},
 	// 全屏壁纸模式特有配置
 	fullscreen: {

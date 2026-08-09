@@ -69,13 +69,13 @@ export const fontsList: FontDefinition[] = [
 	// 2. 参考下方配置填写正确的字体信息
 	// 3. 在 fontConfig.selected 或区域字段中引用 cssVariable
 	{
-		name: "GreatVibes Regular 2",
+		name: "miao",
 		cssVariable: "--font-greatvibes",
 		provider: "local",
 		options: {
 			variants: [
 				{
-					src: ["./public/assets/fonts/GreatVibes-Regular-2.otf"],
+					src: ["./public/assets/fonts/miao.ttf"],
 				},
 			],
 		},

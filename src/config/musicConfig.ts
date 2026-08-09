@@ -30,7 +30,7 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 		// 类型：song=单曲, playlist=歌单, album=专辑, search=搜索, artist=艺术家
 		type: "playlist",
 		// 歌单/专辑/单曲 ID 或搜索关键词
-		id: "10046455237",
+		id: "3326382885",
 		// 认证 token（可选）
 		auth: "",
 		// 备用 API 配置（当主 API 失败时使用）
@@ -48,10 +48,17 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 	local: {
 		playlist: [
 			{
-				name: "使一颗心免于哀伤",
-				artist: "知更鸟 / HOYO-MiX / Chevy",
-				url: "/assets/music/使一颗心免于哀伤-哼唱.mp3",
-				cover: "/assets/music/cover/109951169585655912.webp",
+				name: "The King Funk",
+				artist: "Funk / Bilibili / 梦回夏星miracle",
+				url: "https://tu.202685.xyz/file/1786083081196_The_king_Funk.mp3",
+				cover: "https://tu.202685.xyz/file/1786083891285_梦回夏星miracle.webp",
+				lrc: "",
+			},
+			{
+				name: "Zouzei Funk",
+				artist: "Funk / Bilibili / 未知作者",
+				url: "https://tu.202685.xyz/file/1786093649644_宏伟.mp3",
+				cover: "https://tu.202685.xyz/file/1786088717154_兵王.jpg",
 				lrc: "",
 			},
 		],
