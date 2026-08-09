@@ -6,7 +6,7 @@ const SITE_LANG = "zh_CN";
 
 export const siteConfig: SiteConfig = {
 	// 站点标题
-	title: "FZF_404's Blog",
+	title: "FZF_404",
 
 	// 站点副标题
 	subtitle: "Demo site",
@@ -83,7 +83,7 @@ export const siteConfig: SiteConfig = {
 		// 导航栏标题
 		title: "FZF_404's Blog",
 		// 全宽导航栏，导航栏是否占满屏幕宽度
-		widthFull: false,
+		widthFull: true,
 		// 导航菜单对齐方式，left：左对齐，center：居中
 		menuAlign: "center",
 		// 导航栏图标和标题是否跟随主题色
