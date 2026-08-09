@@ -338,11 +338,15 @@ fzf-blog/
 
 当前新增的侧边栏模块集中放在 `src/components/widget/`：`TimeGreeting.astro` 是带时间和图片预留位的问候卡片，`WeatherForecast.astro` 是可展开/收起的天气预报卡片，`DateProgress.astro` 是日期进度与节日倒计时，`DailyQuote.astro` 是今日一言，`VisitStats.astro` 是浏览数据统计。图片链接、天气 API、浏览统计 API、自定义纪念日和句子库都在 `src/config/sidebarConfig.ts` 对应组件的 `customProps` 中修改。
 
-天气模块的前端只请求站内 `/api/weather`，真实和风天气密钥由 `functions/api/weather.ts` 在服务端读取 `QWEATHER_API_KEY` 环境变量。不要把和风天气 Key 写入 `src/config/sidebarConfig.ts`、组件文件或任何 `PUBLIC_` 前缀环境变量；本地开发使用 `.dev.vars` 保存密钥，该文件已被 `.gitignore` 忽略，无法从访问者 IP 推断位置时，可用 `QWEATHER_LOCATION` 配置备用城市或经纬度。
+天气模块的前端只请求站内 `/api/weather`，真实和风天气密钥由 `functions/api/weather.ts` 在服务端读取 `QWEATHER_API_KEY` 环境变量。不要把和风天气 Key 写入 `src/config/sidebarConfig.ts`、组件文件或任何 `PUBLIC_` 前缀环境变量；本地开发使用 `.dev.vars` 保存密钥，该文件已被 `.gitignore` 忽略。天气优先使用部署平台提供的访问者经纬度自动查询；如果平台无法提供位置，只有显式配置了 `QWEATHER_LOCATION` 才会使用备用城市或经纬度，否则接口返回失败，前端显示“未知/--”，不会展示固定模板城市。
+
+浏览统计模块 `VisitStats.astro` 通过 `src/config/sidebarConfig.ts` 中的 `visitStats.customProps` 接入统计服务。当前配置使用 Waline 的 `/api/article` 按当前页面路径读取浏览量，因此会随真实访问数据变化；如果未配置接口、接口异常或统计服务不可用，组件显示“-- / 统计数据未知”，不会再使用本地示例浏览量、示例访问数或示例访客数，避免把模板数据误认为真实站点数据。
 
 时间问候模块的图片在 `src/config/sidebarConfig.ts` 的 `timeGreeting.customProps.greetingImages` 中维护，当前已按“黎明、早晨、上午、中午、下午、晚上、深夜”填入图床链接。`src/components/widget/TimeGreeting.astro` 会根据访问者当前时间自动切换问候文案和对应图片。
 
 日期进度模块已改为自动节日模式。`src/components/widget/DateProgress.astro` 会扫描未来日期，自动匹配常见公历节日和农历节日（如春节、元宵、端午、中秋、重阳等），不再需要每年手动修改中秋日期；如需添加生日或纪念日，在 `src/config/sidebarConfig.ts` 的 `dateProgress.customProps.festivals` 中追加 `{ name: "纪念日", date: "YYYY-MM-DD" }` 即可。
+
+今日一言模块 `DailyQuote.astro` 会从 `dailyQuote.customProps.quotes` 中随机选取句子展示，刷新页面或重新进入页面时可能变化；它不会联网拉取个人信息。想固定某一句或扩充句库，直接维护 `src/config/sidebarConfig.ts` 的 `quotes` 数组即可。
 
 首页文章列表由 `src/config/siteConfig.ts` 的 `postListLayout` 控制。当前默认使用 `defaultMode: "list"` 和 `mobileDefaultMode: "list"`，文章会以一条一条的列表形式显示；`src/components/layout/PostPage.astro` 只在设置面板允许布局切换时读取用户保存的布局偏好，避免旧的网格偏好覆盖默认列表样式。
 

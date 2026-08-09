@@ -41,20 +41,20 @@ function json(data: unknown, init?: ResponseInit) {
 	});
 }
 
-function getClientLocation(request: Request, env: RuntimeEnv): string {
+function getClientLocation(request: Request, env: RuntimeEnv): string | null {
 	const cf = (request as Request & { cf?: Record<string, unknown> }).cf;
 	const longitude = typeof cf?.longitude === "string" ? cf.longitude : "";
 	const latitude = typeof cf?.latitude === "string" ? cf.latitude : "";
 	if (longitude && latitude) return `${longitude},${latitude}`;
 
-	return env.QWEATHER_LOCATION || "邵阳";
+	return env.QWEATHER_LOCATION || null;
 }
 
 function getDisplayLocation(request: Request): string {
 	const cf = (request as Request & { cf?: Record<string, unknown> }).cf;
 	const city = typeof cf?.city === "string" ? cf.city : "";
 	const region = typeof cf?.region === "string" ? cf.region : "";
-	return [city, region].filter(Boolean).join(" ") || "自动定位";
+	return [city, region].filter(Boolean).join(" ") || "未知";
 }
 
 async function fetchQWeather<T>(
@@ -134,6 +134,16 @@ export async function onRequest(context: {
 	}
 
 	const location = getClientLocation(context.request, context.env);
+	if (!location) {
+		return json(
+			{
+				error: "天气位置未知",
+				message:
+					"当前部署环境未提供访问者经纬度，也未配置 QWEATHER_LOCATION，前端将显示未知。",
+			},
+			{ status: 503 },
+		);
+	}
 	const [nowData, dailyData, airData] = await Promise.all([
 		fetchQWeather("/v7/weather/now", location, apiKey),
 		fetchQWeather("/v7/weather/3d", location, apiKey),

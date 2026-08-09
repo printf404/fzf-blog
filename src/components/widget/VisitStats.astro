@@ -35,7 +35,7 @@ const showTitle = widgetConfig?.showTitle !== false;
 				class="visit-stats-total font-mono text-4xl font-black leading-none tracking-tight text-neutral-900 transition dark:text-neutral-50"
 				data-visit-stats-total
 			>
-				1.6K
+				--
 			</div>
 			<div class="mt-1 text-sm font-bold text-neutral-500 dark:text-neutral-400" data-visit-stats-total-label>总浏览量</div>
 		</div>
@@ -43,14 +43,14 @@ const showTitle = widgetConfig?.showTitle !== false;
 		<div class="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
 			<div class="text-center">
 				<div class="font-mono text-2xl font-black text-neutral-900 transition dark:text-neutral-50" data-visit-stats-visits>
-					391
+					--
 				</div>
 				<div class="mt-1 text-sm font-bold text-neutral-500 dark:text-neutral-400" data-visit-stats-visits-label>访问数</div>
 			</div>
 			<div class="h-10 w-px bg-(--line-color)"></div>
 			<div class="text-center">
 				<div class="font-mono text-2xl font-black text-neutral-900 transition dark:text-neutral-50" data-visit-stats-visitors>
-					268
+					--
 				</div>
 				<div class="mt-1 text-sm font-bold text-neutral-500 dark:text-neutral-400" data-visit-stats-visitors-label>游客数</div>
 			</div>
@@ -75,16 +75,6 @@ const showTitle = widgetConfig?.showTitle !== false;
 			return String(value);
 		}
 
-		function getLocalVisitorId() {
-			const key = "fireflyLocalVisitorId";
-			let visitorId = localStorage.getItem(key);
-			if (!visitorId) {
-				visitorId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-				localStorage.setItem(key, visitorId);
-			}
-			return visitorId;
-		}
-
 		function setText(root, selector, value) {
 			const element = root.querySelector(selector);
 			if (element) element.textContent = String(value);
@@ -101,19 +91,11 @@ const showTitle = widgetConfig?.showTitle !== false;
 			setText(root, "[data-visit-stats-note]", note);
 		}
 
-		function getLocalStats() {
-			const viewKey = "fireflyLocalPageViews";
-			const visitKey = "fireflyLocalVisits";
-			const visitorId = getLocalVisitorId();
-			const pageViews = Number(localStorage.getItem(viewKey) || "1580") + 1;
-			const visits = Number(localStorage.getItem(visitKey) || "390") + 1;
-			localStorage.setItem(viewKey, String(pageViews));
-			localStorage.setItem(visitKey, String(visits));
-
+		function getUnknownStats() {
 			return {
-				totalViews: pageViews,
-				visits,
-				visitors: visitorId ? 268 : 267,
+				totalViews: "--",
+				visits: "--",
+				visitors: "--",
 			};
 		}
 
@@ -159,7 +141,7 @@ const showTitle = widgetConfig?.showTitle !== false;
 				const endpoint = root.getAttribute("data-visit-stats-api-endpoint") || "";
 				const provider = root.getAttribute("data-visit-stats-provider") || "custom";
 				if (!endpoint) {
-					renderStats(root, getLocalStats(), "本地示例统计，等待 API 接入");
+					renderStats(root, getUnknownStats(), "统计数据未知");
 					return;
 				}
 
@@ -183,8 +165,8 @@ const showTitle = widgetConfig?.showTitle !== false;
 					const data = await response.json();
 					renderStats(root, data, "实时统计");
 				} catch (error) {
-					console.warn("浏览统计接口加载失败，使用本地示例统计。", error);
-					renderStats(root, getLocalStats(), "统计接口异常，已使用本地示例");
+					console.warn("浏览统计接口加载失败，显示未知。", error);
+					renderStats(root, getUnknownStats(), "统计数据未知");
 				}
 			});
 		}
