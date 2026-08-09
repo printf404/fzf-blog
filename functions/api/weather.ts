@@ -29,11 +29,13 @@ type WeatherResult = {
 };
 
 function json(data: unknown, init?: ResponseInit) {
+	const status = init?.status ?? 200;
 	return new Response(JSON.stringify(data), {
 		...init,
 		headers: {
 			"content-type": "application/json; charset=utf-8",
-			"cache-control": "public, max-age=600",
+			"cache-control":
+				status >= 400 ? "no-store" : "private, max-age=600",
 			...(init?.headers ?? {}),
 		},
 	});
@@ -42,6 +44,11 @@ function json(data: unknown, init?: ResponseInit) {
 function normalizeApiHost(host: string): string {
 	const trimmed = host.trim().replace(/\/+$/, "");
 	return /^https?:\/\//.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
+function getRuntimeEnvValue(env: RuntimeEnv, key: keyof RuntimeEnv): string {
+	const value = env[key];
+	return typeof value === "string" ? value.trim() : "";
 }
 
 function getClientLocation(request: Request): string | null {
@@ -176,24 +183,24 @@ export async function onRequest(context: {
 	request: Request;
 	env: RuntimeEnv;
 }): Promise<Response> {
-	const apiKey = context.env.QWEATHER_API_KEY;
+	const apiKey = getRuntimeEnvValue(context.env, "QWEATHER_API_KEY");
 	if (!apiKey) {
 		return json(
 			{
 				error: "QWEATHER_API_KEY 未配置",
 				message:
-					"请在部署平台环境变量中配置 QWEATHER_API_KEY，不要把密钥写进前端代码。",
+					"请在 Cloudflare Workers 的“设置 → 变量和密钥”运行时区域配置 QWEATHER_API_KEY，不要只配置“构建”里的变量，也不要把密钥写进前端代码。",
 			},
 			{ status: 503 },
 		);
 	}
-	const apiHost = context.env.QWEATHER_API_HOST;
+	const apiHost = getRuntimeEnvValue(context.env, "QWEATHER_API_HOST");
 	if (!apiHost) {
 		return json(
 			{
 				error: "QWEATHER_API_HOST 未配置",
 				message:
-					"请在和风天气控制台的“设置”页复制专属 API Host，并配置到部署平台环境变量。",
+					"请在和风天气控制台的“设置”页复制专属 API Host，并配置到 Cloudflare Workers 的“设置 → 变量和密钥”运行时区域。",
 			},
 			{ status: 503 },
 		);
