@@ -63,6 +63,9 @@ fzf-blog/
 │   │   ├── static/                               # Spine 播放器静态 CSS/JS
 │   │   └── README.md                             # 看板娘资源说明
 │   └── anime-list.json                           # 番剧或动画列表数据
+├── functions/                                    # 部署平台服务端函数目录，不放前端密钥
+│   └── api/
+│       └── weather.ts                            # 天气服务端代理，读取 QWEATHER_API_KEY 后请求和风天气
 ├── scripts/                                      # 项目自动化脚本
 │   ├── generate-lqips.ts                         # 生成低质量图片占位数据
 │   ├── new-dynamic.js                            # 创建动态内容文件
@@ -333,7 +336,13 @@ fzf-blog/
 
 `src/config/sidebarConfig.ts` 中的 `position: "both"` 保持两套侧边栏配置，`leftComponents` 和 `rightComponents` 仍然独立控制各自组件。当前 `desktopSidebarPlacement: "left"` 表示大屏下将两列侧边栏都放在正文左侧，形成“左侧栏组件列 + 右侧栏组件列 + 正文”的布局；平板和移动端仍按响应式规则显示，不会把两列侧边栏合并成单列。
 
-当前新增的侧边栏模块集中放在 `src/components/widget/`：`TimeGreeting.astro` 是带时间和图片预留位的问候卡片，`WeatherForecast.astro` 是可展开/收起的天气预报卡片，`DateProgress.astro` 是日期进度与节日倒计时，`DailyQuote.astro` 是今日一言，`VisitStats.astro` 是浏览数据统计。图片链接、天气 API、浏览统计 API、节日日期和句子库都在 `src/config/sidebarConfig.ts` 对应组件的 `customProps` 中修改。
+当前新增的侧边栏模块集中放在 `src/components/widget/`：`TimeGreeting.astro` 是带时间和图片预留位的问候卡片，`WeatherForecast.astro` 是可展开/收起的天气预报卡片，`DateProgress.astro` 是日期进度与节日倒计时，`DailyQuote.astro` 是今日一言，`VisitStats.astro` 是浏览数据统计。图片链接、天气 API、浏览统计 API、自定义纪念日和句子库都在 `src/config/sidebarConfig.ts` 对应组件的 `customProps` 中修改。
+
+天气模块的前端只请求站内 `/api/weather`，真实和风天气密钥由 `functions/api/weather.ts` 在服务端读取 `QWEATHER_API_KEY` 环境变量。不要把和风天气 Key 写入 `src/config/sidebarConfig.ts`、组件文件或任何 `PUBLIC_` 前缀环境变量；本地开发使用 `.dev.vars` 保存密钥，该文件已被 `.gitignore` 忽略，无法从访问者 IP 推断位置时，可用 `QWEATHER_LOCATION` 配置备用城市或经纬度。
+
+时间问候模块的图片在 `src/config/sidebarConfig.ts` 的 `timeGreeting.customProps.greetingImages` 中维护，当前已按“黎明、早晨、上午、中午、下午、晚上、深夜”填入图床链接。`src/components/widget/TimeGreeting.astro` 会根据访问者当前时间自动切换问候文案和对应图片。
+
+日期进度模块已改为自动节日模式。`src/components/widget/DateProgress.astro` 会扫描未来日期，自动匹配常见公历节日和农历节日（如春节、元宵、端午、中秋、重阳等），不再需要每年手动修改中秋日期；如需添加生日或纪念日，在 `src/config/sidebarConfig.ts` 的 `dateProgress.customProps.festivals` 中追加 `{ name: "纪念日", date: "YYYY-MM-DD" }` 即可。
 
 首页文章列表由 `src/config/siteConfig.ts` 的 `postListLayout` 控制。当前默认使用 `defaultMode: "list"` 和 `mobileDefaultMode: "list"`，文章会以一条一条的列表形式显示；`src/components/layout/PostPage.astro` 只在设置面板允许布局切换时读取用户保存的布局偏好，避免旧的网格偏好覆盖默认列表样式。
 

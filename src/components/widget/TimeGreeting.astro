@@ -11,6 +11,12 @@ interface Props {
 const { class: className, style, widgetConfig } = Astro.props;
 const customProps = (widgetConfig?.customProps ?? {}) as Record<string, unknown>;
 const imageUrl = typeof customProps.imageUrl === "string" ? customProps.imageUrl : "";
+const greetingImages =
+	typeof customProps.greetingImages === "object" &&
+	customProps.greetingImages !== null
+		? (customProps.greetingImages as Record<string, string>)
+		: {};
+const initialImageUrl = imageUrl || greetingImages["中午"] || "";
 const imageAlt =
 	typeof customProps.imageAlt === "string" ? customProps.imageAlt : "问候配图";
 ---
@@ -18,6 +24,7 @@ const imageAlt =
 <section
 	class:list={["card-base", "time-greeting-widget", "p-4", className]}
 	style={style}
+	data-time-greeting-images={JSON.stringify(greetingImages)}
 >
 	<div class="flex items-start justify-between gap-3">
 		<div class="min-w-0">
@@ -50,12 +57,13 @@ const imageAlt =
 
 	<div class="mt-4 overflow-hidden rounded-2xl">
 		{
-			imageUrl ? (
+			initialImageUrl ? (
 				<img
-					src={imageUrl}
+					src={initialImageUrl}
 					alt={imageAlt}
 					class="h-34 w-full object-cover"
 					loading="lazy"
+					data-time-greeting-image
 				/>
 			) : (
 				<div class="time-greeting-image-placeholder flex h-34 flex-col items-center justify-center gap-2 px-4 text-center">
@@ -97,13 +105,14 @@ const imageAlt =
 <script is:inline data-swup-ignore-script>
 	(() => {
 		const greetings = [
-			{ endHour: 5, text: "夜深了，早点休息。" },
-			{ endHour: 9, text: "早上好，今天也要元气满满。" },
-			{ endHour: 12, text: "上午好，保持好心情。" },
-			{ endHour: 14, text: "中午好，记得午休！" },
-			{ endHour: 18, text: "下午好，喝口水再继续。" },
-			{ endHour: 22, text: "晚上好，慢慢收个尾。" },
-			{ endHour: 24, text: "夜晚好，愿你今晚放松。" },
+			{ key: "深夜", startHour: 23, endHour: 24, text: "深夜了，早点休息。" },
+			{ key: "深夜", startHour: 0, endHour: 5, text: "深夜了，早点休息。" },
+			{ key: "黎明", startHour: 5, endHour: 7, text: "黎明好，新的一天正在醒来。" },
+			{ key: "早晨", startHour: 7, endHour: 9, text: "早上好，今天也要元气满满。" },
+			{ key: "上午", startHour: 9, endHour: 12, text: "上午好，保持好心情。" },
+			{ key: "中午", startHour: 12, endHour: 14, text: "中午好，记得午休！" },
+			{ key: "下午", startHour: 14, endHour: 18, text: "下午好，喝口水再继续。" },
+			{ key: "晚上", startHour: 18, endHour: 23, text: "晚上好，慢慢收个尾。" },
 		];
 
 		function updateTimeGreeting() {
@@ -114,7 +123,15 @@ const imageAlt =
 			const hour = now.getHours();
 			const minute = now.getMinutes();
 			const greeting =
-				greetings.find((item) => hour < item.endHour)?.text || greetings[0].text;
+				greetings.find(
+					(item) => hour >= item.startHour && hour < item.endHour,
+				) || greetings[greetings.length - 1];
+			let images = {};
+			try {
+				images = JSON.parse(root.getAttribute("data-time-greeting-images") || "{}");
+			} catch {
+				images = {};
+			}
 			const weekdays = [
 				"SUNDAY",
 				"MONDAY",
@@ -129,8 +146,9 @@ const imageAlt =
 			const clock = root.querySelector("[data-time-greeting-clock]");
 			const weekday = root.querySelector("[data-time-greeting-weekday]");
 			const date = root.querySelector("[data-time-greeting-date]");
+			const image = root.querySelector("[data-time-greeting-image]");
 
-			if (text) text.textContent = greeting;
+			if (text) text.textContent = greeting.text;
 			if (clock)
 				clock.textContent = `${String(hour).padStart(2, "0")}:${String(
 					minute,
@@ -141,6 +159,10 @@ const imageAlt =
 					2,
 					"0",
 				)}/${String(now.getDate()).padStart(2, "0")}`;
+			if (image && images[greeting.key] && image.getAttribute("src") !== images[greeting.key]) {
+				image.setAttribute("src", images[greeting.key]);
+				image.setAttribute("alt", `${greeting.key}问候配图`);
+			}
 		}
 
 		updateTimeGreeting();

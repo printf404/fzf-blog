@@ -9,20 +9,16 @@ interface Props {
 
 const { class: className, style, widgetConfig } = Astro.props;
 const customProps = (widgetConfig?.customProps ?? {}) as Record<string, unknown>;
-const festivalName =
-	typeof customProps.festivalName === "string" ? customProps.festivalName : "中秋";
-const festivalDate =
-	typeof customProps.festivalDate === "string"
-		? customProps.festivalDate
-		: "2026-09-25";
+const customFestivals = Array.isArray(customProps.festivals)
+	? customProps.festivals
+	: [];
 ---
 
 <section
 	class:list={["card-base", "date-progress-widget", "p-4", className]}
 	style={style}
 	data-date-progress-widget
-	data-festival-name={festivalName}
-	data-festival-date={festivalDate}
+	data-custom-festivals={JSON.stringify(customFestivals)}
 >
 	<div class="mb-4 text-center text-sm font-bold text-neutral-800 transition dark:text-neutral-100">
 		<span data-date-progress-current>2026年8月9日 周日</span>
@@ -69,16 +65,16 @@ const festivalDate =
 
 	<div class="mt-5 border-t border-(--line-color) pt-4 text-center">
 		<div class="text-base font-black text-neutral-800 transition dark:text-neutral-100">
-			距离<span data-festival-name>{festivalName}</span>
+			距离<span data-festival-name>自动节日</span>
 		</div>
 		<div
 			class="date-progress-festival-days mt-1 font-mono text-5xl font-black leading-none text-(--primary)"
 			data-festival-days
 		>
-			47
+			--
 		</div>
 		<div class="mt-1 text-sm font-bold text-neutral-500 dark:text-neutral-400" data-festival-date>
-			{festivalDate}
+			自动识别中
 		</div>
 	</div>
 </section>
@@ -128,6 +124,61 @@ const festivalDate =
 <script is:inline data-swup-ignore-script>
 	(() => {
 		const weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+		const solarFestivals = [
+			{ name: "元旦", month: 1, day: 1 },
+			{ name: "情人节", month: 2, day: 14 },
+			{ name: "妇女节", month: 3, day: 8 },
+			{ name: "植树节", month: 3, day: 12 },
+			{ name: "愚人节", month: 4, day: 1 },
+			{ name: "清明", month: 4, day: 4 },
+			{ name: "劳动节", month: 5, day: 1 },
+			{ name: "青年节", month: 5, day: 4 },
+			{ name: "儿童节", month: 6, day: 1 },
+			{ name: "建党节", month: 7, day: 1 },
+			{ name: "建军节", month: 8, day: 1 },
+			{ name: "教师节", month: 9, day: 10 },
+			{ name: "国庆节", month: 10, day: 1 },
+			{ name: "圣诞节", month: 12, day: 25 },
+		];
+		const lunarFestivals = [
+			{ name: "春节", month: 1, day: 1 },
+			{ name: "元宵节", month: 1, day: 15 },
+			{ name: "龙抬头", month: 2, day: 2 },
+			{ name: "端午节", month: 5, day: 5 },
+			{ name: "七夕", month: 7, day: 7 },
+			{ name: "中元节", month: 7, day: 15 },
+			{ name: "中秋", month: 8, day: 15 },
+			{ name: "重阳节", month: 9, day: 9 },
+			{ name: "腊八节", month: 12, day: 8 },
+			{ name: "小年", month: 12, day: 23 },
+		];
+		const lunarMonthMap = {
+			正月: 1,
+			一月: 1,
+			二月: 2,
+			三月: 3,
+			四月: 4,
+			五月: 5,
+			六月: 6,
+			七月: 7,
+			八月: 8,
+			九月: 9,
+			十月: 10,
+			冬月: 11,
+			十一月: 11,
+			腊月: 12,
+			十二月: 12,
+		};
+		const lunarFormatter = (() => {
+			try {
+				return new Intl.DateTimeFormat("zh-CN-u-ca-chinese", {
+					month: "long",
+					day: "numeric",
+				});
+			} catch {
+				return null;
+			}
+		})();
 
 		function clampPercent(value) {
 			return Math.max(0, Math.min(100, value));
@@ -140,6 +191,96 @@ const festivalDate =
 		function daysBetween(start, end) {
 			const oneDay = 24 * 60 * 60 * 1000;
 			return Math.ceil((startOfDay(end).getTime() - startOfDay(start).getTime()) / oneDay);
+		}
+
+		function addDays(date, offset) {
+			const next = startOfDay(date);
+			next.setDate(next.getDate() + offset);
+			return next;
+		}
+
+		function formatDateISO(date) {
+			return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+				2,
+				"0",
+			)}-${String(date.getDate()).padStart(2, "0")}`;
+		}
+
+		function getCustomFestivals(root) {
+			try {
+				const festivals = JSON.parse(root.getAttribute("data-custom-festivals") || "[]");
+				if (!Array.isArray(festivals)) return [];
+				return festivals.filter(
+					(item) =>
+						item &&
+						typeof item.name === "string" &&
+						typeof item.date === "string",
+				);
+			} catch {
+				return [];
+			}
+		}
+
+		function getSolarFestival(date) {
+			const month = date.getMonth() + 1;
+			const day = date.getDate();
+			return solarFestivals.find(
+				(festival) => festival.month === month && festival.day === day,
+			);
+		}
+
+		function getLunarDate(date) {
+			if (!lunarFormatter) return null;
+			const parts = lunarFormatter.formatToParts(date);
+			const rawMonth = parts.find((part) => part.type === "month")?.value || "";
+			const rawDay = parts.find((part) => part.type === "day")?.value || "";
+			const month = lunarMonthMap[rawMonth.replace(/^闰/, "")];
+			const day = Number.parseInt(rawDay, 10);
+			if (!month || !Number.isFinite(day)) return null;
+			return { month, day };
+		}
+
+		function getLunarFestival(date) {
+			const lunarDate = getLunarDate(date);
+			if (!lunarDate) return null;
+
+			const festival = lunarFestivals.find(
+				(item) => item.month === lunarDate.month && item.day === lunarDate.day,
+			);
+			if (festival) return festival;
+
+			const tomorrowLunarDate = getLunarDate(addDays(date, 1));
+			if (
+				tomorrowLunarDate &&
+				tomorrowLunarDate.month === 1 &&
+				tomorrowLunarDate.day === 1
+			) {
+				return { name: "除夕" };
+			}
+
+			return null;
+		}
+
+		function getUpcomingFestival(now, root) {
+			const customFestivals = getCustomFestivals(root);
+			for (let offset = 0; offset <= 400; offset++) {
+				const candidate = addDays(now, offset);
+				const date = formatDateISO(candidate);
+				const customFestival = customFestivals.find((item) => item.date === date);
+				if (customFestival) return { ...customFestival, date, days: offset };
+
+				const lunarFestival = getLunarFestival(candidate);
+				if (lunarFestival) return { ...lunarFestival, date, days: offset };
+
+				const solarFestival = getSolarFestival(candidate);
+				if (solarFestival) return { ...solarFestival, date, days: offset };
+			}
+
+			return {
+				name: "元旦",
+				date: `${now.getFullYear() + 1}-01-01`,
+				days: daysBetween(now, new Date(`${now.getFullYear() + 1}-01-01T00:00:00`)),
+			};
 		}
 
 		function setText(root, selector, value) {
@@ -199,12 +340,10 @@ const festivalDate =
 				const hoursLeft = Math.max(0, 24 - now.getHours() - (now.getMinutes() > 0 ? 1 : 0));
 				setProgress(root, "day", dayPercent, hoursLeft);
 
-				const festivalDate = root.getAttribute("data-festival-date") || "";
-				const festival = festivalDate ? new Date(`${festivalDate}T00:00:00`) : null;
-				if (festival && !Number.isNaN(festival.getTime())) {
-					setText(root, "[data-festival-days]", Math.max(0, daysBetween(now, festival)));
-					setText(root, "[data-festival-date]", festivalDate);
-				}
+				const festival = getUpcomingFestival(now, root);
+				setText(root, "[data-festival-name]", festival.name);
+				setText(root, "[data-festival-days]", festival.days);
+				setText(root, "[data-festival-date]", festival.date);
 			});
 		}
 

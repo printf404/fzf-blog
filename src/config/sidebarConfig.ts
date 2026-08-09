@@ -73,10 +73,10 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 			// 是否在文章详情页显示
 			showOnPostPage: true,
 			customProps: {
-				// 天气 API 预留位：
-				// 建议填一个你自己的服务端接口，由服务端根据访问者 IP 自动定位城市；
-				// 返回字段可参考 src/components/widget/WeatherForecast.astro 里的 fallbackWeather。
-				apiEndpoint: "",
+				// 天气接口走站内服务端代理，不要把和风天气 Key 写到前端。
+				// 部署时把真实密钥配置到环境变量 QWEATHER_API_KEY。
+				// 可选：QWEATHER_LOCATION 作为无法从访问者 IP 推断城市时的备用位置。
+				apiEndpoint: "/api/weather",
 			},
 		},
 		{
@@ -129,10 +129,10 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 			// 是否在文章详情页显示
 			showOnPostPage: true,
 			customProps: {
-				// 浏览统计 API 预留位：
-				// 建议返回 { totalViews: number, visits: number, visitors: number }。
-				// 不填写时会用本地示例统计兜底，方便先看 UI。
-				apiEndpoint: "",
+				// 浏览统计接口使用 Waline 评论服务地址。
+				// Waline 的 /api/article 会按 path 返回浏览量，评论区也使用同一个 serverURL。
+				apiEndpoint: "https://comment.202684.xyz",
+				provider: "waline",
 			},
 		},
 	],
@@ -149,9 +149,16 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 			// 是否在文章详情页显示
 			showOnPostPage: true,
 			customProps: {
-				// 问候图片链接预留位：
-				// 你拿到图片链接后，填到这里即可，例如 imageUrl: "https://example.com/hello.webp"
-				imageUrl: "",
+				// 问候图片链接，会根据当前时间自动切换
+				greetingImages: {
+					黎明: "https://tu.202685.xyz/file/1786257814716_liming.webp",
+					早晨: "https://tu.202685.xyz/file/1786257815800_zaochen.webp",
+					上午: "https://tu.202685.xyz/file/1786257811956_shangwu.webp",
+					中午: "https://tu.202685.xyz/file/1786257814664_zhongwu.webp",
+					下午: "https://tu.202685.xyz/file/1786257817003_xiawu.webp",
+					晚上: "https://tu.202685.xyz/file/1786257819272_wanshang.webp",
+					深夜: "https://tu.202685.xyz/file/1786257820552_shenye.webp",
+				},
 				imageAlt: "问候配图",
 			},
 		},
@@ -165,9 +172,11 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 			// 是否在文章详情页显示
 			showOnPostPage: true,
 			customProps: {
-				// 节日倒计时配置，可按需要改成其他日期
-				festivalName: "中秋",
-				festivalDate: "2026-09-25",
+				// 自动节日倒计时：
+				// 组件会自动识别公历节日和常见农历节日，无需每年手动修改。
+				// 如需加入生日、纪念日等自定义日期，可在 festivals 中追加：
+				// { name: "纪念日", date: "2026-08-09" }
+				festivals: [],
 			},
 		},
 		{
