@@ -1,255 +1,199 @@
 ---
 import WidgetLayout from "@/components/common/WidgetLayout.astro";
-import type { WidgetComponentConfig } from "@/types/config";
 
 interface Props {
 	class?: string;
 	style?: string;
-	widgetConfig?: WidgetComponentConfig;
 }
-
-const { class: className, style, widgetConfig } = Astro.props;
-const customProps = (widgetConfig?.customProps ?? {}) as Record<string, unknown>;
-const apiEndpoint =
-	typeof customProps.apiEndpoint === "string" ? customProps.apiEndpoint : "";
-const provider =
-	typeof customProps.provider === "string" ? customProps.provider : "custom";
-const shareUrl = typeof customProps.shareUrl === "string" ? customProps.shareUrl : "";
-const showTitle = widgetConfig?.showTitle !== false;
+const { class: className, style } = Astro.props;
 ---
 
-<WidgetLayout
-	name="统计"
-	showTitle={showTitle}
-	id="visit-stats-widget"
-	class={className}
-	style={style}
->
-	<div
-		class="visit-stats"
-		data-visit-stats
-		data-visit-stats-api-endpoint={apiEndpoint}
-		data-visit-stats-provider={provider}
-		data-visit-stats-share-url={shareUrl}
-	>
-		<a
-			class="visit-stats-link block transition active:scale-95"
-			data-visit-stats-link
-			target="_blank"
-			rel="noopener noreferrer"
-		>
-			<div class="text-center">
-				<div
-					class="visit-stats-total font-mono text-4xl font-black leading-none tracking-tight text-neutral-900 transition dark:text-neutral-50"
-					data-visit-stats-total
-				>
-					--
-				</div>
-				<div class="mt-1 text-sm font-bold text-neutral-500 dark:text-neutral-400" data-visit-stats-total-label>总浏览量</div>
-			</div>
-
-			<div class="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-				<div class="text-center">
-					<div class="font-mono text-2xl font-black text-neutral-900 transition dark:text-neutral-50" data-visit-stats-visits>
-						--
-					</div>
-					<div class="mt-1 text-sm font-bold text-neutral-500 dark:text-neutral-400" data-visit-stats-visits-label>访问数</div>
-				</div>
-				<div class="h-10 w-px bg-(--line-color)"></div>
-				<div class="text-center">
-					<div class="font-mono text-2xl font-black text-neutral-900 transition dark:text-neutral-50" data-visit-stats-visitors>
-						--
-					</div>
-					<div class="mt-1 text-sm font-bold text-neutral-500 dark:text-neutral-400" data-visit-stats-visitors-label>游客数</div>
-				</div>
-			</div>
-		</a>
-
-		<div class="mt-3 text-center text-[0.7rem] font-bold text-neutral-400 dark:text-neutral-500" data-visit-stats-note>
-			等待统计 API 接入
-		</div>
-	</div>
+<WidgetLayout id="umami-stats" name="统计" class:list={["umami-stats-container", className, "cursor-pointer transition-opacity active:scale-95"]} {style}>
+    <a target="_blank" rel="noopener noreferrer" class="block umami-link">
+        <div class="text-center py-2">
+            <div class="text-3xl font-bold text-neutral-900 dark:text-neutral-100 umami-total-pageviews">-</div>
+            <div class="text-sm text-neutral-500 dark:text-neutral-400">总浏览量</div>
+        </div>
+        <div class="grid grid-cols-2 divide-x divide-neutral-200 dark:divide-neutral-700 text-center pt-2">
+            <div class="px-2">
+                <div class="text-xl font-bold text-neutral-900 dark:text-neutral-100 umami-total-visits">-</div>
+                <div class="text-sm text-neutral-500 dark:text-neutral-400">访问数</div>
+            </div>
+            <div class="px-2">
+                <div class="text-xl font-bold text-neutral-900 dark:text-neutral-100 umami-total-visitors">-</div>
+                <div class="text-sm text-neutral-500 dark:text-neutral-400">游客数</div>
+            </div>
+        </div>
+    </a>
 </WidgetLayout>
 
-<style>
-	.visit-stats-total {
-		text-shadow: 0 10px 22px color-mix(in oklab, var(--primary) 22%, transparent);
-	}
+<script>
+const UMAMI_CONFIG = {
+    shareUrl: 'https://blog.202685.xyz/share/vl68tXaDfKb7xDtF',
+};
 
-	.visit-stats-link[href] {
-		cursor: pointer;
-	}
+let __UMAMI_INTERNAL = {
+    baseUrl: '',
+    websiteId: '',
+    shareToken: '',
+    shareId: '',
+    isReady: false
+};
 
-	.visit-stats-link:not([href]) {
-		pointer-events: none;
-	}
-</style>
+const FALLBACK_STATS = {
+    pageviews: 1000,
+    visits: 1000,
+    visitors: 1000,
+};
 
-<script is:inline data-swup-ignore-script>
-	(() => {
-		const FETCH_TIMEOUT = 8000;
+async function initUmamiConfig() {
+    try {
+        const sharePath = UMAMI_CONFIG.shareUrl.split('/share/')[1];
+        if (!sharePath) throw new Error('Invalid Umami Share URL');
 
-		function fetchWithTimeout(url, options = {}) {
-			const controller = new AbortController();
-			const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
-			return fetch(url, { ...options, signal: controller.signal }).finally(() =>
-				clearTimeout(timeoutId),
-			);
-		}
+        let apiBase = '';
+        if (UMAMI_CONFIG.shareUrl.includes('cloud.umami.is') || UMAMI_CONFIG.shareUrl.includes('analytics.umami.is')) {
+            const region = UMAMI_CONFIG.shareUrl.includes('/analytics/eu/') ? 'eu' : 'us';
+            apiBase = `https://cloud.umami.is/analytics/${region}/api`;
+        } else {
+            const urlObj = new URL(UMAMI_CONFIG.shareUrl);
+            apiBase = `${urlObj.origin}/api`;
+        }
 
-		function formatCompact(value) {
-			if (value === "--" || value === null || value === undefined) return "--";
-			value = Number(value);
-			if (!Number.isFinite(value)) return "--";
-			if (value >= 1000) return `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}K`;
-			return String(value);
-		}
+        const res = await fetch(`${apiBase}/share/${sharePath}`);
+        if (!res.ok) throw new Error(`Failed to fetch share config: ${res.status}`);
+        const data = await res.json();
 
-		function setText(root, selector, value) {
-			const element = root.querySelector(selector);
-			if (element) element.textContent = String(value);
-		}
+        __UMAMI_INTERNAL = {
+            baseUrl: apiBase,
+            websiteId: data.websiteId,
+            shareToken: data.token,
+            shareId: data.shareId,
+            isReady: true
+        };
 
-		function renderStats(root, stats, note) {
-			setText(root, "[data-visit-stats-total]", formatCompact(stats.totalViews));
-			setText(root, "[data-visit-stats-visits]", formatCompact(stats.visits));
-			setText(root, "[data-visit-stats-visitors]", formatCompact(stats.visitors));
-			if (stats.totalLabel) setText(root, "[data-visit-stats-total-label]", stats.totalLabel);
-			if (stats.visitsLabel) setText(root, "[data-visit-stats-visits-label]", stats.visitsLabel);
-			if (stats.visitorsLabel)
-				setText(root, "[data-visit-stats-visitors-label]", stats.visitorsLabel);
-			setText(root, "[data-visit-stats-note]", note);
-		}
+        const links = document.querySelectorAll('.umami-link');
+        links.forEach(link => link.setAttribute('href', UMAMI_CONFIG.shareUrl));
 
-		function getUnknownStats() {
-			return {
-				totalViews: "--",
-				visits: "--",
-				visitors: "--",
-			};
-		}
+    } catch (e) {
+        console.error('Umami Config Init Failed:', e);
+    }
+}
 
-		async function loadUmamiShareStats(root, shareUrl) {
-			// 通过同域代理获取数据，避免浏览器 CORS 跨域拦截
-			const proxyUrl = `/api/umami-share?share=${encodeURIComponent(shareUrl)}`;
-			const response = await fetchWithTimeout(proxyUrl, {
-				credentials: "same-origin",
-			});
-			if (!response.ok)
-				throw new Error(`Umami proxy API ${response.status}`);
+function formatNumber(num: number): string {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
+    }
+    return Math.round(num).toString();
+}
 
-			const data = await response.json();
-			renderStats(root, data, "Umami 统计");
-		}
+function setStats(values: { pageviews: number; visits: number; visitors: number }) {
+    const pageviewsElements = document.querySelectorAll('.umami-total-pageviews');
+    const visitsElements = document.querySelectorAll('.umami-total-visits');
+    const visitorsElements = document.querySelectorAll('.umami-total-visitors');
 
-		function normalizeWalineArticle(data) {
-			const article = Array.isArray(data)
-				? data[0]
-				: Array.isArray(data?.data)
-					? data.data[0]
-					: Array.isArray(data?.article)
-						? data.article[0]
-						: data;
-			const views =
-				Number(article?.time) ||
-				Number(article?.views) ||
-				Number(article?.view) ||
-				Number(article?.pageview) ||
-				0;
-			return {
-				totalViews: views,
-				visits: views,
-				visitors: "--",
-				totalLabel: "当前页浏览量",
-				visitsLabel: "浏览数",
-				visitorsLabel: "访客数",
-			};
-		}
+    const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+    const animHandles = new Map<HTMLElement, number>();
 
-		async function loadWalineStats(root, endpoint) {
-			const base = endpoint.replace(/\/$/, "");
-			const currentPath = window.location.pathname || "/";
-			const response = await fetchWithTimeout(
-				`${base}/api/article?path=${encodeURIComponent(currentPath)}`,
-				{ method: "GET" },
-			);
-			if (!response.ok) throw new Error(`Waline article API ${response.status}`);
-			const data = await response.json();
-			const stats = normalizeWalineArticle(data);
-			renderStats(root, stats, "Waline 浏览统计");
-		}
+    const animateStat = (el: HTMLElement | null, to: number, duration = 2000) => {
+        if (!el) return;
 
-		async function loadUmamiStats(root, endpoint) {
-			const response = await fetchWithTimeout(endpoint, { credentials: "omit" });
-			if (!response.ok) throw new Error(`Umami stats API ${response.status}`);
-			const data = await response.json();
-			renderStats(root, data, "Umami 统计");
-		}
+        const prev = animHandles.get(el);
+        if (prev) cancelAnimationFrame(prev);
 
-		function isAbortError(error) {
-			return (
-				error instanceof DOMException && error.name === "AbortError"
-			);
-		}
+        const from = 0;
+        const startTime = performance.now();
 
-		async function loadVisitStats() {
-			document.querySelectorAll("[data-visit-stats]").forEach(async (root) => {
-				const endpoint = root.getAttribute("data-visit-stats-api-endpoint") || "";
-				const provider = root.getAttribute("data-visit-stats-provider") || "custom";
-				const shareUrl = root.getAttribute("data-visit-stats-share-url") || "";
+        const tick = (now: number) => {
+            const elapsed = now - startTime;
+            const progress = Math.min(1, elapsed / duration);
+            const easedProgress = easeOutCubic(progress);
 
-				// 立即设置链接，确保点击跳转可用（即使 API 请求失败）
-				if (shareUrl) {
-					const link = root.querySelector("[data-visit-stats-link]");
-					if (link) link.setAttribute("href", shareUrl);
-				}
+            const current = from + (to - from) * easedProgress;
+            el.textContent = formatNumber(current);
 
-				if (!endpoint && !shareUrl) {
-					renderStats(root, getUnknownStats(), "统计数据未知");
-					return;
-				}
+            if (progress < 1) {
+                animHandles.set(el, requestAnimationFrame(tick));
+            }
+        };
+        animHandles.set(el, requestAnimationFrame(tick));
+    };
 
-				setText(root, "[data-visit-stats-note]", "加载中…");
+    pageviewsElements.forEach(el => animateStat(el as HTMLElement, values.pageviews));
+    visitsElements.forEach(el => animateStat(el as HTMLElement, values.visits));
+    visitorsElements.forEach(el => animateStat(el as HTMLElement, values.visitors));
+}
 
-				try {
-					if (provider === "waline") {
-						await loadWalineStats(root, endpoint);
-						return;
-					}
+async function fetchUmamiStats() {
+    if (!__UMAMI_INTERNAL.isReady) {
+        await initUmamiConfig();
+    }
 
-					if (provider === "umami") {
-						if (shareUrl) {
-							await loadUmamiShareStats(root, shareUrl);
-							return;
-						}
-						await loadUmamiStats(root, endpoint);
-						return;
-					}
+    if (!__UMAMI_INTERNAL.isReady) {
+        setStats(FALLBACK_STATS);
+        return;
+    }
 
-					// 在这里接入你的访问统计接口。
-					// 建议接口返回：{ totalViews: number, visits: number, visitors: number }
-					const response = await fetchWithTimeout(endpoint, {
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({
-							pathname: window.location.pathname,
-							referrer: document.referrer,
-						}),
-					});
-					if (!response.ok) throw new Error(`Visit stats API ${response.status}`);
-					const data = await response.json();
-					renderStats(root, data, "实时统计");
-				} catch (error) {
-					console.warn("浏览统计接口加载失败，显示未知。", error);
-					const note = isAbortError(error)
-						? "统计服务响应超时"
-						: "统计服务暂不可用";
-					renderStats(root, getUnknownStats(), note);
-				}
-			});
-		}
+    try {
+        const endAt = Date.now();
+        const startAt = 0;
+        const url = `${__UMAMI_INTERNAL.baseUrl}/websites/${__UMAMI_INTERNAL.websiteId}/stats?startAt=${startAt}&endAt=${endAt}&unit=hour&timezone=Asia%2FShanghai`;
 
-		loadVisitStats();
-		document.addEventListener("swup:contentReplaced", loadVisitStats);
-	})();
+        const response = await fetch(url, {
+            headers: {
+                'x-umami-share-context': '1',
+                'x-umami-share-token': __UMAMI_INTERNAL.shareToken
+            }
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        const getValue = (field: any) => (typeof field === 'object' ? field?.value : field) || 0;
+
+        setStats({
+            pageviews: getValue(data.pageviews),
+            visits: getValue(data.visits),
+            visitors: getValue(data.visitors),
+        });
+
+    } catch (error) {
+        console.error('Umami Fetch Failed:', error);
+        setStats(FALLBACK_STATS);
+    }
+}
+
+let __umamiStatsStarted = false;
+function startUmamiStats() {
+    if (__umamiStatsStarted) return;
+    __umamiStatsStarted = true;
+    fetchUmamiStats();
+}
+
+function initUmamiStatsVisibility() {
+    const containers = document.querySelectorAll('.umami-stats-container');
+    const io = new IntersectionObserver((entries) => {
+        let isAnyVisible = false;
+        entries.forEach(entry => {
+            if (entry.isIntersecting) isAnyVisible = true;
+        });
+
+        if (isAnyVisible) {
+            startUmamiStats();
+            io.disconnect();
+        }
+    }, { threshold: 0.1 });
+
+    containers.forEach(container => io.observe(container));
+}
+
+initUmamiStatsVisibility();
+
+if (window.swup) {
+    window.swup.hooks.on('page:view', () => {
+        __umamiStatsStarted = false;
+        initUmamiStatsVisibility();
+    });
+}
 </script>
