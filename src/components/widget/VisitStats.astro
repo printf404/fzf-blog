@@ -87,6 +87,16 @@ const showTitle = widgetConfig?.showTitle !== false;
 
 <script is:inline data-swup-ignore-script>
 	(() => {
+		const FETCH_TIMEOUT = 8000;
+
+		function fetchWithTimeout(url, options = {}) {
+			const controller = new AbortController();
+			const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+			return fetch(url, { ...options, signal: controller.signal }).finally(() =>
+				clearTimeout(timeoutId),
+			);
+		}
+
 		function formatCompact(value) {
 			if (value === "--" || value === null || value === undefined) return "--";
 			value = Number(value);
@@ -119,71 +129,17 @@ const showTitle = widgetConfig?.showTitle !== false;
 			};
 		}
 
-		function getFieldValue(field) {
-			if (typeof field === "object" && field) return Number(field.value) || 0;
-			return Number(field) || 0;
-		}
-
-		function parseUmamiShareUrl(shareUrl) {
-			const url = new URL(shareUrl);
-			const sharePath = url.pathname.split("/share/")[1];
-			if (!sharePath) throw new Error("Invalid Umami share URL");
-
-			let apiBase = `${url.origin}/api`;
-			if (
-				shareUrl.includes("cloud.umami.is") ||
-				shareUrl.includes("analytics.umami.is")
-			) {
-				const region = shareUrl.includes("/analytics/eu/") ? "eu" : "us";
-				apiBase = `https://cloud.umami.is/analytics/${region}/api`;
-			}
-
-			return { apiBase, sharePath, url };
-		}
-
 		async function loadUmamiShareStats(root, shareUrl) {
-			const link = root.querySelector("[data-visit-stats-link]");
-			if (link) link.setAttribute("href", shareUrl);
-
-			const { apiBase, sharePath } = parseUmamiShareUrl(shareUrl);
-			const shareResponse = await fetch(`${apiBase}/share/${sharePath}`, {
-				credentials: "omit",
+			// 通过同域代理获取数据，避免浏览器 CORS 跨域拦截
+			const proxyUrl = `/api/umami-share?share=${encodeURIComponent(shareUrl)}`;
+			const response = await fetchWithTimeout(proxyUrl, {
+				credentials: "same-origin",
 			});
-			if (!shareResponse.ok)
-				throw new Error(`Umami share API ${shareResponse.status}`);
+			if (!response.ok)
+				throw new Error(`Umami proxy API ${response.status}`);
 
-			const shareData = await shareResponse.json();
-			const websiteId = shareData.websiteId;
-			const shareToken = shareData.token;
-			if (!websiteId || !shareToken) throw new Error("Invalid Umami share data");
-
-			const endAt = Date.now();
-			const statsUrl = new URL(`${apiBase}/websites/${websiteId}/stats`);
-			statsUrl.searchParams.set("startAt", "0");
-			statsUrl.searchParams.set("endAt", String(endAt));
-			statsUrl.searchParams.set("unit", "hour");
-			statsUrl.searchParams.set("timezone", "Asia/Shanghai");
-
-			const statsResponse = await fetch(statsUrl.toString(), {
-				credentials: "omit",
-				headers: {
-					"x-umami-share-context": "1",
-					"x-umami-share-token": shareToken,
-				},
-			});
-			if (!statsResponse.ok)
-				throw new Error(`Umami stats API ${statsResponse.status}`);
-
-			const data = await statsResponse.json();
-			renderStats(
-				root,
-				{
-					totalViews: getFieldValue(data.pageviews),
-					visits: getFieldValue(data.visits),
-					visitors: getFieldValue(data.visitors),
-				},
-				"Umami 统计",
-			);
+			const data = await response.json();
+			renderStats(root, data, "Umami 统计");
 		}
 
 		function normalizeWalineArticle(data) {
@@ -213,7 +169,7 @@ const showTitle = widgetConfig?.showTitle !== false;
 		async function loadWalineStats(root, endpoint) {
 			const base = endpoint.replace(/\/$/, "");
 			const currentPath = window.location.pathname || "/";
-			const response = await fetch(
+			const response = await fetchWithTimeout(
 				`${base}/api/article?path=${encodeURIComponent(currentPath)}`,
 				{ method: "GET" },
 			);
@@ -224,10 +180,16 @@ const showTitle = widgetConfig?.showTitle !== false;
 		}
 
 		async function loadUmamiStats(root, endpoint) {
-			const response = await fetch(endpoint, { credentials: "omit" });
+			const response = await fetchWithTimeout(endpoint, { credentials: "omit" });
 			if (!response.ok) throw new Error(`Umami stats API ${response.status}`);
 			const data = await response.json();
 			renderStats(root, data, "Umami 统计");
+		}
+
+		function isAbortError(error) {
+			return (
+				error instanceof DOMException && error.name === "AbortError"
+			);
 		}
 
 		async function loadVisitStats() {
@@ -235,14 +197,19 @@ const showTitle = widgetConfig?.showTitle !== false;
 				const endpoint = root.getAttribute("data-visit-stats-api-endpoint") || "";
 				const provider = root.getAttribute("data-visit-stats-provider") || "custom";
 				const shareUrl = root.getAttribute("data-visit-stats-share-url") || "";
+
+				// 立即设置链接，确保点击跳转可用（即使 API 请求失败）
 				if (shareUrl) {
 					const link = root.querySelector("[data-visit-stats-link]");
 					if (link) link.setAttribute("href", shareUrl);
 				}
+
 				if (!endpoint && !shareUrl) {
 					renderStats(root, getUnknownStats(), "统计数据未知");
 					return;
 				}
+
+				setText(root, "[data-visit-stats-note]", "加载中…");
 
 				try {
 					if (provider === "waline") {
@@ -261,7 +228,7 @@ const showTitle = widgetConfig?.showTitle !== false;
 
 					// 在这里接入你的访问统计接口。
 					// 建议接口返回：{ totalViews: number, visits: number, visitors: number }
-					const response = await fetch(endpoint, {
+					const response = await fetchWithTimeout(endpoint, {
 						method: "POST",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({
@@ -274,7 +241,10 @@ const showTitle = widgetConfig?.showTitle !== false;
 					renderStats(root, data, "实时统计");
 				} catch (error) {
 					console.warn("浏览统计接口加载失败，显示未知。", error);
-					renderStats(root, getUnknownStats(), "统计数据未知");
+					const note = isAbortError(error)
+						? "统计服务响应超时"
+						: "统计服务暂不可用";
+					renderStats(root, getUnknownStats(), note);
 				}
 			});
 		}

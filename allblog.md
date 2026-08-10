@@ -65,7 +65,9 @@ fzf-blog/
 │   └── anime-list.json                           # 番剧或动画列表数据
 ├── functions/                                    # 部署平台服务端函数目录，不放前端密钥
 │   └── api/
-│       └── weather.ts                            # 天气服务端代理，读取 QWEATHER_API_KEY 后请求和风天气
+│       ├── weather.ts                            # 天气服务端代理，读取 QWEATHER_API_KEY 后请求和风天气
+│       ├── stats.ts                              # Umami 统计代理（用户名/密码认证方式，需配置 UMAMI_API_URL 等环境变量）
+│       └── umami-share.ts                        # Umami 统计代理（分享链接方式，通过同域代理绕过 CORS）
 ├── api/
 │   └── weather.ts                                # Vercel 原生 Serverless Function，转发 /api/weather 到天气代理逻辑
 ├── src/cloudflare-worker.ts                       # Cloudflare Workers 静态资源部署入口，转发 /api/weather 并托管 dist
@@ -343,7 +345,7 @@ fzf-blog/
 
 天气模块的前端只请求站内 `/api/weather`，真实和风天气凭据由 `functions/api/weather.ts` 在服务端读取运行时环境变量。Vercel 部署时由根目录 `api/weather.ts` 提供 Serverless Function，因此博客页面仍然是静态构建，只有天气接口是动态的；Cloudflare Workers 静态资源部署时由 `src/cloudflare-worker.ts` 接住 `/api/weather`，其它路径继续交给 `dist` 静态资源。必须配置 `QWEATHER_API_KEY` 和 `QWEATHER_API_HOST`：`QWEATHER_API_KEY` 是项目凭据页里的 API KEY，`QWEATHER_API_HOST` 是和风天气控制台“设置”页里的专属 API Host。Cloudflare 中要把这两个变量加到“变量和密钥/运行时变量”，不要只加到“构建变量”；Vercel 中要加到项目的 Environment Variables。不要把和风天气 Key 或 API Host 写入 `src/config/sidebarConfig.ts`、组件文件或任何 `PUBLIC_` 前缀环境变量；本地开发使用 `.dev.vars` 保存凭据，该文件已被 `.gitignore` 忽略。天气只使用部署平台提供的访问者经纬度自动查询，不设置固定兜底城市；如果平台无法提供位置、位置解析失败或天气接口异常，前端显示“未知/--”，不会展示固定模板城市。
 
-浏览统计模块 `VisitStats.astro` 通过 `src/config/sidebarConfig.ts` 中的 `visitStats.customProps` 接入统计服务。当前配置使用 Waline 的 `/api/article` 按当前页面路径读取浏览量，因此会随真实访问数据变化；如果未配置接口、接口异常或统计服务不可用，组件显示“-- / 统计数据未知”，不会再使用本地示例浏览量、示例访问数或示例访客数，避免把模板数据误认为真实站点数据。
+浏览统计模块 `VisitStats.astro` 通过 `src/config/sidebarConfig.ts` 中的 `visitStats.customProps` 接入统计服务。当前配置使用 Umami 分享链接方式：前端将 `shareUrl` 传给同域代理 `/api/umami-share`，由 `functions/api/umami-share.ts` 在服务端转发请求到 Umami API 并返回统计数据，避免了浏览器跨域（CORS）拦截。卡片点击后跳转到 Umami 分享页面查看详细数据。如果未配置接口、Umami 服务不可用或请求超时，组件显示"-- / 统计服务暂不可用"，不会使用模板数据。
 
 时间问候模块的图片在 `src/config/sidebarConfig.ts` 的 `timeGreeting.customProps.greetingImages` 中维护，当前已按“黎明、早晨、上午、中午、下午、晚上、深夜”填入图床链接。`src/components/widget/TimeGreeting.astro` 会根据访问者当前时间自动切换问候文案和对应图片。
 

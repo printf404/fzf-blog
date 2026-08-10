@@ -1,5 +1,6 @@
 import { onRequest as handleStatsRequest } from "../functions/api/stats";
 import { onRequest as handleWeatherRequest } from "../functions/api/weather";
+import { onRequest as handleUmamiShareRequest } from "../functions/api/umami-share";
 
 type WorkerEnv = {
 	ASSETS: {
@@ -11,6 +12,7 @@ type WorkerEnv = {
 	UMAMI_USERNAME?: string;
 	UMAMI_PASSWORD?: string;
 	UMAMI_WEBSITE_ID?: string;
+	UMAMI_SHARE_URL?: string;
 };
 
 function isApiPath(pathname: string, route: string) {
@@ -27,6 +29,10 @@ export default {
 
 		if (isApiPath(url.pathname, "/api/stats")) {
 			return handleStatsRequest({ request, env });
+		}
+
+		if (isApiPath(url.pathname, "/api/umami-share")) {
+			return handleUmamiShareRequest({ request, env });
 		}
 
 		return env.ASSETS.fetch(request);
