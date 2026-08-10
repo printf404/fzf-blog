@@ -132,7 +132,7 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 			customProps: {
 				// 访问统计通过 Umami 分享链接读取公开统计数据，卡片可点击跳转分享页。
 				// 在 Umami 后台的“分享”中添加分享链接后，填到 shareUrl。
-				shareUrl: "https://umami-steel-eta.vercel.app/share/vl68tXaDfKb7xDtF",
+				shareUrl: "https://blog.202685.xyz/share/vl68tXaDfKb7xDtF",
 				apiEndpoint: "",
 				provider: "umami",
 			},
