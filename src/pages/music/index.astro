@@ -60,6 +60,9 @@ const pageTitle = "音乐";
 
 	</style>
 	<script is:inline>
+		// 这个脚本只在 /music/ 页面生效：
+		// 1. 进入时临时切换成沉浸式全屏状态；
+		// 2. 离开时恢复进入前的主题与页面结构，避免影响其它博客页面。
 		// 保存进入页面前的原始主题状态，用于离开时恢复
 		const originalThemeClass = document.documentElement.classList.contains('dark');
 		const originalDataTheme = document.documentElement.getAttribute('data-theme');
@@ -132,6 +135,7 @@ const pageTitle = "音乐";
 		// 兜底：页面卸载时也清理
 		window.addEventListener('pagehide', cleanupMusicPage);
 	</script>
+	<!-- 页面级容器：CSS 会用它隐藏普通博客布局，并给可视化组件提供全屏背景变量。 -->
 	<div class="music-visualizer-page">
 		<MusicVisualizer client:only="svelte" />
 	</div>

@@ -97,6 +97,7 @@ const managerConfigStr = JSON.stringify({
 
     // ── Audio element (persistent, attached to body) ────────
     var audio = document.createElement('audio');
+    // 音乐可视化页面会通过这个 id 找到同一个 audio 元素并读取频谱数据。
     audio.id = 'firefly-music-audio';
     audio.crossOrigin = 'anonymous';
     audio.style.display = 'none';
@@ -459,6 +460,7 @@ const managerConfigStr = JSON.stringify({
         }
     }
 
+    // 给 /music/ 可视化页面的“切换歌单”弹窗使用；当前 local 模式下会安全返回。
     async function switchPlaylist(newId) {
         if (!config.meting || !newId) return;
         var oldId = config.meting.id;
@@ -484,6 +486,7 @@ const managerConfigStr = JSON.stringify({
         }
     }
 
+    // 恢复到配置文件里的默认 Meting 歌单 ID。
     async function resetPlaylist() {
         if (!defaultPlaylistId) return;
         await switchPlaylist(defaultPlaylistId);

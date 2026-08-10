@@ -1,5 +1,6 @@
 import * as THREE from "three";
 
+// 负责把全局 audio 元素接入 Web Audio API，并把频谱数据整理成 ThreeScene 需要的低频、中频、高频等指标。
 export interface AudioData {
 	bass: number;
 	mid: number;

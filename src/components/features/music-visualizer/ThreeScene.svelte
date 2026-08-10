@@ -5,6 +5,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { musicVisualizerConfig } from "@/config/musicConfig";
 import { AudioAnalyzer, type AudioData } from "./AudioAnalyzer";
 
+// Three.js 可视化主场景：根据 AudioAnalyzer 输出的频段数据驱动地形柱、粒子、流星和涟漪动画。
 interface Props {
 	audioAnalyzer: AudioAnalyzer;
 	backgroundColor?: string;

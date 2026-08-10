@@ -8,6 +8,7 @@ interface LyricLine {
 
 type LyricStatus = "loading" | "loaded" | "none" | "failed";
 
+// 歌词层不直接读取音频时间，而是监听 MusicManager 派发的歌词列表与当前歌词行事件。
 let containerEl = $state<HTMLDivElement | null>(null);
 let trackEl = $state<HTMLDivElement | null>(null);
 let lyrics: LyricLine[] = $state([]);

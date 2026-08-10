@@ -49,9 +49,12 @@ fzf-blog/
 │   │   │   ├── ad/                               # 广告图片
 │   │   │   ├── effects/                          # 页面特效图片，如樱花贴图
 │   │   │   └── sponsor/                          # 打赏或赞助相关图片
-│   │   └── js/                                   # 第三方静态 JS
-│   │       ├── highlight.min.js                  # 代码高亮脚本
-│   │       └── marked.min.js                     # Markdown 解析脚本
+│   │   ├── js/                                   # 第三方静态 JS
+│   │   │   ├── highlight.min.js                  # 代码高亮脚本
+│   │   │   └── marked.min.js                     # Markdown 解析脚本
+│   │   └── music/                                # 音乐播放器静态资源
+│   │       └── lrc/                              # LRC 歌词文件目录
+│   │           └── Catch My Breath-Kelly Clarkson.lrc # 贝爷小曲歌词文件
 │   ├── favicon/                                  # 多尺寸站点图标
 │   ├── gallery/                                  # 相册静态资源
 │   │   ├── encrypted-test/                       # 加密相册示例资源
@@ -366,6 +369,8 @@ fzf-blog/
 ### `src/assets` 与 `public`
 
 `src/assets/` 放源码内资源，适合被 Astro/Vite 构建处理或通过 import 引用。`public/` 放静态直出资源，构建后会按原路径访问，适合 favicon、第三方静态脚本、字体、模型、相册原始资源等。
+
+音乐歌词文件统一放在 `public/assets/music/lrc/`，并在 `src/config/musicConfig.ts` 对应歌曲的 `lrc` 字段里使用 `/assets/music/lrc/文件名.lrc` 引用。当前 `Catch My Breath-Kelly Clarkson` 已配置为 `/assets/music/lrc/Catch My Breath-Kelly Clarkson.lrc`。
 
 简单判断规则：需要在组件或脚本里 import 的资源放 `src/assets/`；需要通过 `/assets/...`、`/favicon/...`、`/pio/...` 直接访问的资源放 `public/`。
 

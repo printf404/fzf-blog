@@ -8,13 +8,17 @@ import ThreeScene from "./ThreeScene.svelte";
 import VisualizerControls from "./VisualizerControls.svelte";
 
 const audioAnalyzer = new AudioAnalyzer();
+// 3D 场景初始化完成后再淡入，避免用户看到未完成的 canvas 初始化过程。
 let sceneReady = $state(false);
+// 页面背景跟随当前主题和 musicVisualizerConfig 中的背景色配置。
 let backgroundColor = $state(
 	musicVisualizerConfig.background?.dark ?? "#0a0a15",
 );
+// 从当前歌曲封面提取出的主色，用来驱动频谱地形的动态配色。
 let accentColor = $state<string | null>(null);
 let colorMode = $state<"dynamic" | "theme">("dynamic");
 
+// 同步音乐页背景色；进入 /music/ 后页面会被包在 .music-visualizer-page 中。
 function syncPageBackground() {
 	backgroundColor = document.documentElement.classList.contains("dark")
 		? (musicVisualizerConfig.background?.dark ?? "#0a0a15")
@@ -26,6 +30,7 @@ function syncPageBackground() {
 }
 
 function connectAudio() {
+	// MusicManager.astro 会创建这个全局 audio 元素；可视化页面只负责读取频谱，不单独创建播放器。
 	const audio = document.getElementById(
 		"firefly-music-audio",
 	) as HTMLAudioElement | null;
@@ -55,6 +60,7 @@ async function onTrackChange(e: CustomEvent) {
 	const track = e.detail?.track;
 	if (colorMode !== "dynamic") return;
 	if (track?.pic) {
+		// 动态取色模式：歌曲切换时从封面提取主色，交给 ThreeScene 做视觉主题。
 		const color = await extractDominantColor(track.pic);
 		if (color) {
 			accentColor = color;
@@ -98,6 +104,7 @@ onMount(() => {
 
 	const mgr = window.__fireflyMusic;
 	if (!mgr) {
+		// Layout 中的 MusicManager 是全局脚本，极少数情况下会比 Svelte 组件稍晚可用。
 		const waitForMgr = () => {
 			if (window.__fireflyMusic) {
 				connectAudio();
@@ -192,7 +199,7 @@ onDestroy(() => {
 	</div>
 
 	<nav class="music-navbar">
-		<a href="/" class="music-navbar-title" title="返回首页">HydeMusic</a>
+		<a href="/" class="music-navbar-title" title="返回首页">FZF-Music</a>
 		<div class="music-navbar-links">
 			<a href="/" class="music-navbar-link">首页</a>
 			<a href="/archive/" class="music-navbar-link">归档</a>

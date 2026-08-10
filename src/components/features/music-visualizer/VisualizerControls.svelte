@@ -26,6 +26,7 @@ let switchPlaylistId = $state("");
 let isSwitching = $state(false);
 let colorMode = $state<"dynamic" | "theme">("dynamic");
 
+// 切换可视化配色模式：dynamic 使用歌曲封面主色，theme 使用固定主题色。
 function toggleColorMode() {
 	colorMode = colorMode === "dynamic" ? "theme" : "dynamic";
 	localStorage.setItem("music-color-mode", colorMode);
@@ -42,6 +43,7 @@ function syncPlaylistScroll() {
 	activeItem?.scrollIntoView({ block: "center", behavior: "smooth" });
 }
 
+// 下面这些控制函数都委托给 Layout 中的全局 MusicManager，避免音乐页和侧边栏播放器各自维护一套播放状态。
 function togglePlay() {
 	window.__fireflyMusic?.togglePlay();
 }
@@ -63,6 +65,7 @@ function toggleMute() {
 }
 
 function onVolumeClick(e: MouseEvent) {
+	// 点击音量条时，按点击位置换算成 0-1 的音量值。
 	const target = e.currentTarget as HTMLElement;
 	const rect = target.getBoundingClientRect();
 	const x = e.clientX - rect.left;
@@ -71,6 +74,7 @@ function onVolumeClick(e: MouseEvent) {
 }
 
 function onVolumeKeydown(e: KeyboardEvent) {
+	// 允许键盘通过方向键、Home、End 控制音量，避免只有鼠标才能操作。
 	const step = e.shiftKey ? 0.1 : 0.05;
 	if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
 		e.preventDefault();
@@ -88,6 +92,7 @@ function onVolumeKeydown(e: KeyboardEvent) {
 }
 
 function onProgressClick(e: MouseEvent) {
+	// 点击进度条时，按点击位置换算成 0-1 的播放百分比。
 	const target = e.currentTarget as HTMLElement;
 	const rect = target.getBoundingClientRect();
 	const x = e.clientX - rect.left;
@@ -96,6 +101,7 @@ function onProgressClick(e: MouseEvent) {
 }
 
 function onProgressKeydown(e: KeyboardEvent) {
+	// 允许键盘通过方向键、Home、End 控制播放进度。
 	const step = e.shiftKey ? 0.1 : 0.05;
 	if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
 		e.preventDefault();
@@ -135,6 +141,7 @@ function closeSwitchDialog() {
 }
 
 async function handleSwitchPlaylist() {
+	// 仅在 meting 模式下切换歌单；local 模式下 MusicManager 会安全忽略。
 	const id = switchPlaylistId.trim();
 	if (!id) return;
 	isSwitching = true;
@@ -157,6 +164,7 @@ function onSwitchKeydown(e: KeyboardEvent) {
 }
 
 function syncState() {
+	// 首次加载或事件触发后，把全局播放器状态同步到可视化控制条。
 	const mgr = window.__fireflyMusic;
 	if (!mgr) return;
 	const state = mgr.getState();

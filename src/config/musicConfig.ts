@@ -14,7 +14,7 @@ export const musicVisualizerConfig: MusicVisualizerConfig = {
 	rotationSpeed: 0.2,
 	// 页面背景色（按明暗主题）
 	background: {
-		dark: "#0a0a15",
+		dark: "#27172f",
 		light: "#ffffff",
 	},
 };
@@ -65,10 +65,12 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 	},
 
 	// 本地音乐配置（当 mode 为 'local' 时使用）
-	// 1. 支持传入歌词文件的路径
+	// 歌词配置写在每首歌的 lrc 字段：
+	// 1. 支持传入歌词文件的路径，建议把 .lrc 放到 public/assets/music/lrc/ 下
 	// lrc: "/assets/music/lrc/使一颗心免于哀伤-哼唱.lrc",
 	// 2. 或者直接填入歌词字符串内容
 	// lrc: "[00:00.00]歌词内容...",
+	// 3. 如果暂时没有歌词，保留空字符串即可，页面会显示“暂无歌词”
 	local: {
 		playlist: [
 			{
@@ -84,6 +86,13 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 				url: "https://tu.202685.xyz/file/1786093649644_宏伟.mp3",
 				cover: "https://tu.202685.xyz/file/1786088717154_兵王.jpg",
 				lrc: "",
+			},
+			{
+				name: "Catch My Breath-Kelly Clarkson",
+				artist: "贝爷の小曲 / 我们的旅途结束了,现在该你了",
+				url: "https://tu.202685.xyz/file/1786369061494_Catch_My_Breath-Kelly_Clarkson.mp3",
+				cover: "https://tu.202685.xyz/file/1786369195760_贝爷.webp",
+				lrc: "/assets/music/lrc/Catch My Breath-Kelly Clarkson.lrc",
 			},
 		],
 	},
