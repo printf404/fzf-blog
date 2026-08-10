@@ -50,9 +50,17 @@ declare global {
 				durationStr: string;
 				lyrics: Array<{ time: number; text: string }>;
 				currentLrcIndex: number;
+				lyricsStatus?: "loading" | "loaded" | "none" | "failed";
 				initialized: boolean;
 				error: string | null;
-				config: Record<string, unknown>;
+				config: Record<string, unknown> & {
+					i18n?: {
+						loadingLyrics?: string;
+						noLyrics?: string;
+						failedLyrics?: string;
+						[key: string]: unknown;
+					};
+				};
 			};
 			togglePlay: () => void;
 			playNext: () => void;
@@ -64,6 +72,9 @@ declare global {
 			seekToTime: (time: number) => void;
 			playTrackByIndex: (index: number) => void;
 			loadTrack: (index: number, autoPlay: boolean) => void;
+			switchPlaylist: (newId: string) => Promise<void>;
+			resetPlaylist: () => Promise<void>;
+			getDefaultPlaylistId: () => string;
 		};
 		/** 樱花特效管理器,Worker 模式与主线程回退模式均实现该接口 */
 		sakuraManager?: SakuraManagerLike;

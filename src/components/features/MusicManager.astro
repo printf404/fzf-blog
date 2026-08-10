@@ -62,6 +62,7 @@ const managerConfigStr = JSON.stringify({
     if (window.__fireflyMusic) return;
 
     var config = JSON.parse(managerConfigStr);
+    var defaultPlaylistId = config.meting && config.meting.id ? String(config.meting.id) : "";
 
     // ── Helpers ──────────────────────────────────────────────
     function formatTime(seconds) {
@@ -96,6 +97,7 @@ const managerConfigStr = JSON.stringify({
 
     // ── Audio element (persistent, attached to body) ────────
     var audio = document.createElement('audio');
+    audio.id = 'firefly-music-audio';
     audio.crossOrigin = 'anonymous';
     audio.style.display = 'none';
     audio.preload = 'none'; // 阻止浏览器预加载和自动恢复播放
@@ -457,6 +459,36 @@ const managerConfigStr = JSON.stringify({
         }
     }
 
+    async function switchPlaylist(newId) {
+        if (!config.meting || !newId) return;
+        var oldId = config.meting.id;
+        config.meting.id = String(newId);
+
+        try {
+            state.playlist = [];
+            state.currentIndex = 0;
+            state.lyrics = [];
+            state.currentLrcIndex = -1;
+            state.error = null;
+            await fetchMetingData();
+            emit('fm:playlist-changed', { playlist: state.playlist });
+            if (state.playlist.length > 0) {
+                loadTrack(0, false);
+            } else {
+                emit('fm:error', { message: config.i18n.noSongs });
+            }
+        } catch (e) {
+            config.meting.id = oldId;
+            console.error('Music Manager switch playlist error:', e);
+            emit('fm:error', { message: config.i18n.error });
+        }
+    }
+
+    async function resetPlaylist() {
+        if (!defaultPlaylistId) return;
+        await switchPlaylist(defaultPlaylistId);
+    }
+
     // ── Public API ───────────────────────────────────────────
     window.__fireflyMusic = {
         init: init,
@@ -491,7 +523,10 @@ const managerConfigStr = JSON.stringify({
         seek: seek,
         seekToTime: seekToTime,
         playTrackByIndex: playTrackByIndex,
-        loadTrack: loadTrack
+        loadTrack: loadTrack,
+        switchPlaylist: switchPlaylist,
+        resetPlaylist: resetPlaylist,
+        getDefaultPlaylistId: function () { return defaultPlaylistId; }
     };
 })();
 </script>

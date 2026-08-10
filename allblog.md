@@ -90,6 +90,7 @@ fzf-blog/
 │   │   ├── common/                               # 通用可复用组件
 │   │   ├── controls/                             # 页面导航与交互控件
 │   │   ├── features/                             # 全局功能增强与特效组件
+│   │   │   └── music-visualizer/                 # 音乐可视化页面的 Svelte/Three.js 组件组
 │   │   ├── layout/                               # 页面布局与结构组件
 │   │   │   ├── PostPage.astro                    # 首页文章列表容器，控制列表/网格布局切换逻辑
 │   │   │   └── PostCard.astro                    # 单篇文章卡片，列表模式下一篇文章占一整行
@@ -117,7 +118,7 @@ fzf-blog/
 │   │   ├── index.ts                              # 配置统一导出入口
 │   │   ├── licenseConfig.ts                      # 许可证配置
 │   │   ├── mermaidConfig.ts                      # Mermaid 图表配置
-│   │   ├── musicConfig.ts                        # 音乐播放器配置
+│   │   ├── musicConfig.ts                        # 音乐播放器与音乐可视化配置
 │   │   ├── navBarConfig.ts                       # 导航栏配置
 │   │   ├── pioConfig.ts                          # 看板娘配置
 │   │   ├── plantumlConfig.ts                     # PlantUML 图表配置
@@ -170,6 +171,7 @@ fzf-blog/
 │   │   ├── categories/                           # 分类页路由目录
 │   │   ├── dynamic/                              # 动态页相关路由
 │   │   ├── gallery/                              # 相册页相关路由
+│   │   ├── music/                                # 音乐可视化页面路由，对应 /music/
 │   │   ├── og/                                   # Open Graph 图片生成路由
 │   │   ├── posts/                                # 博客文章详情动态路由
 │   │   ├── tags/                                 # 标签页路由目录
@@ -223,6 +225,8 @@ fzf-blog/
 │   │   ├── markdown-extend.styl                  # Markdown 扩展样式
 │   │   ├── markdown.css                          # Markdown 正文样式
 │   │   ├── navbar.css                            # 导航栏样式
+│   │   ├── pages/                                # 独立页面级样式目录
+│   │   │   └── music-visualizer.css              # 音乐可视化沉浸式页面样式
 │   │   ├── photoswipe.css                        # PhotoSwipe 图片查看样式
 │   │   ├── scrollbar.css                         # 滚动条基础样式
 │   │   ├── tags.css                              # 标签页面样式
@@ -252,7 +256,7 @@ fzf-blog/
 │   │   ├── iconify-svelte-offline.d.ts           # Iconify Svelte 离线类型声明
 │   │   ├── licenseConfig.ts                      # 许可证配置类型
 │   │   ├── mermaidConfig.ts                      # Mermaid 配置类型
-│   │   ├── musicConfig.ts                        # 音乐配置类型
+│   │   ├── musicConfig.ts                        # 音乐播放器与音乐可视化配置类型
 │   │   ├── navBarConfig.ts                       # 导航栏配置类型
 │   │   ├── pioConfig.ts                          # 看板娘配置类型
 │   │   ├── profileConfig.ts                      # 个人资料配置类型
@@ -333,11 +337,15 @@ fzf-blog/
 
 更详细的组件职责说明见 `src/components/README.md`。新增组件时优先放入现有分类，避免重复创建含义相近的新目录。
 
+音乐可视化页面相关组件集中放在 `src/components/features/music-visualizer/`。其中 `MusicVisualizer.svelte` 是页面入口，`ThreeScene.svelte` 负责 Three.js 频谱地形渲染，`AudioAnalyzer.ts` 负责从全局音乐播放器的 `#firefly-music-audio` 音频元素读取频谱数据，`VisualizerControls.svelte` 和 `LyricsOverlay.svelte` 负责播放控制与歌词展示。
+
 ### `src/config`
 
 `src/config/` 是站点配置中心，`index.ts` 负责统一导出配置。配置模块通常与 `src/types/` 中的类型定义对应，修改配置结构时应同步检查类型文件。
 
 更详细的配置说明见 `src/config/README.md`。新增配置文件建议使用 `camelCaseConfig.ts` 命名，并从 `src/config/index.ts` 统一导出。
+
+音乐相关配置统一维护在 `src/config/musicConfig.ts`，包括侧边栏/导航音乐播放器的 `musicPlayerConfig` 和 `/music/` 沉浸式可视化页面的 `musicVisualizerConfig`。页面是否开放由 `src/config/siteConfig.ts` 中的 `pages.music` 控制，顶部导航入口在 `src/config/navBarConfig.ts` 的 `LinkPresets.Music` 中维护。
 
 `src/config/sidebarConfig.ts` 中的 `position: "both"` 保持两套侧边栏配置，`leftComponents` 和 `rightComponents` 仍然独立控制各自组件。当前 `desktopSidebarPlacement: "left"` 表示大屏下将两列侧边栏都放在正文左侧，形成“左侧栏组件列 + 右侧栏组件列 + 正文”的布局；平板和移动端仍按响应式规则显示，不会把两列侧边栏合并成单列。
 

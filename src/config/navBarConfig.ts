@@ -56,6 +56,9 @@ const getDynamicNavBarConfig = (): NavBarConfig => {
 			// 动态
 			LinkPresets.Dynamic,
 
+			// 音乐
+			LinkPresets.Music,
+
 			// 相册
 			LinkPresets.Gallery,
 
@@ -149,6 +152,12 @@ export const LinkPresets: Record<string, NavBarLink> = {
 		url: "/dynamic/",
 		icon: "material-symbols:forum-rounded",
 		pageKey: "dynamic",
+	},
+	Music: {
+		name: "音乐",
+		url: "/music/",
+		icon: "material-symbols:music-note-rounded",
+		pageKey: "music",
 	},
 	Archive: {
 		name: "归档",

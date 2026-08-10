@@ -1,5 +1,23 @@
-import type { MusicPlayerConfig } from "../types/musicConfig";
+import type { MusicPlayerConfig, MusicVisualizerConfig } from "../types/musicConfig";
 
+// 音乐可视化配置
+export const musicVisualizerConfig: MusicVisualizerConfig = {
+	// 振幅倍数
+	amplitude: 1.5,
+	// 频谱平滑系数 (0-1)
+	smoothing: 0.8,
+	// FFT 大小 (32-32768, 必须是 2 的幂)
+	fftSize: 256,
+	// 地形网格密度
+	gridSize: 64,
+	// 自动旋转速度 (弧度/秒)
+	rotationSpeed: 0.2,
+	// 页面背景色（按明暗主题）
+	background: {
+		dark: "#0a0a15",
+		light: "#ffffff",
+	},
+};
 // 音乐播放器配置
 export const musicPlayerConfig: MusicPlayerConfig = {
 	// 是否在导航栏显示音乐播放器入口
@@ -7,6 +25,9 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 
 	// 是否在侧边栏显示音乐播放器组件
 	showInSidebar: true,
+
+	// 是否显示迷你播放器
+	showMiniPlayer: true,
 
 	// 使用方式："meting" 使用 Meting API，"local" 使用本地音乐列表
 	mode: "local",
@@ -19,6 +40,9 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 
 	// 是否显启用歌词
 	showLyrics: true,
+
+	// 是否同步全局播放器（进入 /music 页面时）
+	syncWithGlobalPlayer: true,
 
 	// Meting API 配置
 	meting: {
