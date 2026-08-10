@@ -136,6 +136,13 @@ const showTitle = widgetConfig?.showTitle !== false;
 			renderStats(root, stats, "Waline 浏览统计");
 		}
 
+		async function loadUmamiStats(root, endpoint) {
+			const response = await fetch(endpoint, { credentials: "omit" });
+			if (!response.ok) throw new Error(`Umami stats API ${response.status}`);
+			const data = await response.json();
+			renderStats(root, data, "Umami 统计");
+		}
+
 		async function loadVisitStats() {
 			document.querySelectorAll("[data-visit-stats]").forEach(async (root) => {
 				const endpoint = root.getAttribute("data-visit-stats-api-endpoint") || "";
@@ -148,6 +155,11 @@ const showTitle = widgetConfig?.showTitle !== false;
 				try {
 					if (provider === "waline") {
 						await loadWalineStats(root, endpoint);
+						return;
+					}
+
+					if (provider === "umami") {
+						await loadUmamiStats(root, endpoint);
 						return;
 					}
 

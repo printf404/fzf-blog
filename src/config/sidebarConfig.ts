@@ -130,10 +130,10 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 			// 是否在文章详情页显示
 			showOnPostPage: true,
 			customProps: {
-				// 浏览统计接口使用 Waline 评论服务地址。
-				// Waline 的 /api/article 会按 path 返回浏览量，评论区也使用同一个 serverURL。
-				apiEndpoint: "https://comment.202684.xyz",
-				provider: "waline",
+				// 访问统计通过站内 /api/stats 代理从 Umami 获取数据。
+				// 部署时配置运行时环境变量：UMAMI_API_URL、UMAMI_USERNAME、UMAMI_PASSWORD、UMAMI_WEBSITE_ID。
+				apiEndpoint: "/api/stats",
+				provider: "umami",
 			},
 		},
 	],
