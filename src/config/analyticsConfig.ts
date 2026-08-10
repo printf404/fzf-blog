@@ -8,11 +8,11 @@ export const analyticsConfig: AnalyticsConfig = {
 	// Umami 统计配置
 	umamiAnalytics: {
 		// Umami Website ID
-		websiteId: "2e5fb246-db3f-47a1-9503-3ca22a6d965f",
-		// Umami JS地址，支持使用自建
-		scriptUrl: "https://cloud.umami.is/script.js",
-		// Umami 会话回放脚本地址，支持使用自建
-		replaysScriptUrl: "https://cloud.umami.is/recorder.js",
+		websiteId: "3c06f30c-e6d6-4338-88b7-4dead89df36d",
+		// Umami JS地址，指向自建 Umami 实例
+		scriptUrl: "https://umami-steel-eta.vercel.app/script.js",
+		// Umami 会话回放脚本地址，指向自建 Umami 实例
+		replaysScriptUrl: "https://umami-steel-eta.vercel.app/recorder.js",
 		// 是否追踪出站链接
 		trackOutboundLinks: true,
 		// 是否收集浏览器性能指标
