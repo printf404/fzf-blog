@@ -1,4 +1,10 @@
 ---
+// ============================================================
+// 天气预报组件
+// 使用 uapis.cn 免费天气 API，无需 API Key，支持 IP 自动定位
+// 数据流：浏览器 → uapis.cn API（根据 IP 自动定位或使用指定城市）→ 前端渲染
+// 不使用固定兜底城市；未指定 city/adcode 时由 API 根据访问者 IP 自动定位
+// ============================================================
 import { Icon } from "astro-icon/components";
 import WidgetLayout from "@/components/common/WidgetLayout.astro";
 import type { WidgetComponentConfig } from "@/types/config";
@@ -10,284 +16,804 @@ interface Props {
 }
 
 const { class: className, style, widgetConfig } = Astro.props;
+// 从侧边栏配置的 customProps 中读取天气参数
 const customProps = (widgetConfig?.customProps ?? {}) as Record<string, unknown>;
-const apiEndpoint =
-	typeof customProps.apiEndpoint === "string" ? customProps.apiEndpoint : "";
+const city = typeof customProps.city === "string" ? customProps.city : "";
+const adcode = typeof customProps.adcode === "string" ? customProps.adcode : "";
+const extended = customProps.extended !== false; // 默认显示扩展信息
 const showTitle = widgetConfig?.showTitle !== false;
+
+const COLLAPSED_HEIGHT = "9rem";
 ---
 
-<WidgetLayout
-	name="天气预报"
-	showTitle={showTitle}
-	id="weather-forecast-widget"
-	class={className}
-	style={style}
-	isCollapsed={true}
-	collapsedHeight="13.75rem"
-	useExpandedButtonSpacing={true}
->
-	<div
-		class="weather-widget"
-		data-weather-widget
-		data-weather-api-endpoint={apiEndpoint}
-	>
-		<div class="mb-4 flex items-start justify-between gap-3">
-			<div class="min-w-0">
-				<div class="mb-1 flex items-center gap-1.5 text-base font-bold text-neutral-800 transition dark:text-neutral-100">
-					<Icon
-						is:inline
-						name="material-symbols:location-on-rounded"
-						class="text-xl text-(--primary)"
-						aria-hidden="true"
-					/>
-					<span data-weather-location>位置自动识别中</span>
+<WidgetLayout name="天气预报" showTitle={showTitle} id="weather-widget" isCollapsed={true} collapsedHeight={COLLAPSED_HEIGHT} class={className} style={style}>
+	<div class="weather-container" data-weather-init data-city={city} data-adcode={adcode} data-extended={String(extended)}>
+		<!-- 加载状态 -->
+		<div class="weather-loading" data-weather-loading>
+			<div class="loading-spinner"></div>
+			<span class="loading-text">加载中...</span>
+		</div>
+
+		<!-- 错误状态 -->
+		<div class="weather-error weather-hidden" data-weather-error>
+			<Icon name="material-symbols:error-outline" class="error-icon" />
+			<span class="error-text" data-error-message>加载失败</span>
+			<button class="retry-btn" data-retry-btn>
+				<Icon name="material-symbols:refresh" />
+				重试
+			</button>
+		</div>
+
+		<!-- 天气数据 -->
+		<div class="weather-content weather-hidden" data-weather-content>
+			<!-- 头部：城市和天气图标 -->
+			<div class="weather-header">
+				<div class="location-info">
+					<Icon name="material-symbols:location-on" class="location-icon" />
+					<span class="city-name text-neutral-900 dark:text-neutral-100" data-city></span>
+					<span class="district text-neutral-600 dark:text-neutral-100" data-district></span>
 				</div>
-				<div class="mt-5 flex items-end gap-4">
-					<div class="weather-temp leading-none">
-						<span data-weather-temp>--</span><span class="align-top text-lg">°</span>
+				<div class="weather-icon-wrapper" data-weather-icon-wrapper>
+					<Icon name="material-symbols:wb-sunny" class="weather-icon" data-weather-icon />
+				</div>
+			</div>
+
+			<!-- 温度显示 -->
+			<div class="temperature-section">
+				<span class="temperature" data-temperature>--</span>
+				<span class="temperature-unit">°</span>
+				<span class="weather-desc dark:text-neutral-100" data-weather>--</span>
+			</div>
+
+			<!-- 最高/最低温度 -->
+			<div class="temperature-range" data-temperature-range>
+				<span class="temp-max">高温 <span data-temp-max>--</span>°C</span>
+				<span class="temp-divider">/</span>
+				<span class="temp-min">低温 <span data-temp-min>--</span>°C</span>
+			</div>
+
+			<!-- 扩展信息（当 extended=true 时显示） -->
+			<div class="weather-extended" data-weather-extended>
+				<!-- 第一行：风力和能见度 -->
+				<div class="extended-item">
+					<Icon name="material-symbols:air" class="extended-icon icon-wind" />
+					<div class="extended-content">
+						<span class="extended-label dark:text-neutral-100">风力</span>
+						<span class="extended-value dark:text-neutral-100" data-wind>--</span>
 					</div>
-					<div class="pb-1 text-2xl font-bold text-neutral-900 transition dark:text-neutral-50" data-weather-text>
-						未知
+				</div>
+				<div class="extended-item">
+					<Icon name="material-symbols:visibility" class="extended-icon icon-visibility" />
+					<div class="extended-content">
+						<span class="extended-label dark:text-neutral-100">能见度</span>
+						<span class="extended-value dark:text-neutral-100" data-visibility>--km</span>
+					</div>
+				</div>
+				<!-- 第二行：体感温度和湿度 -->
+				<div class="extended-item">
+					<Icon name="material-symbols:thermostat" class="extended-icon icon-feels-like" />
+					<div class="extended-content">
+						<span class="extended-label dark:text-neutral-100">体感温度</span>
+						<span class="extended-value dark:text-neutral-100" data-feels-like>--°C</span>
+					</div>
+				</div>
+				<div class="extended-item">
+					<Icon name="material-symbols:humidity-high" class="extended-icon icon-humidity" />
+					<div class="extended-content">
+						<span class="extended-label dark:text-neutral-100">湿度</span>
+						<span class="extended-value dark:text-neutral-100" data-humidity>--%</span>
+					</div>
+				</div>
+				<!-- 第三行：气压和空气质量 -->
+				<div class="extended-item">
+					<Icon name="material-symbols:compress" class="extended-icon icon-pressure" />
+					<div class="extended-content">
+						<span class="extended-label dark:text-neutral-100">气压</span>
+						<span class="extended-value dark:text-neutral-100" data-pressure>--hPa</span>
+					</div>
+				</div>
+				<!-- 空气质量 -->
+				<div class="extended-item aqi-item" data-aqi-section>
+					<Icon name="material-symbols:eco" class="extended-icon icon-aqi" />
+					<div class="extended-content">
+						<span class="extended-label dark:text-neutral-100">空气质量</span>
+						<span class="extended-value dark:text-neutral-100">
+							<span class="aqi-value" data-aqi>--</span>
+							<span class="aqi-tag" data-aqi-category>--</span>
+						</span>
+					</div>
+				</div>
+				<!-- 第四行：云量和紫外线 -->
+				<div class="extended-item">
+					<Icon name="material-symbols:cloud" class="extended-icon icon-cloud" />
+					<div class="extended-content">
+						<span class="extended-label dark:text-neutral-100">云量</span>
+						<span class="extended-value dark:text-neutral-100" data-cloud>--%</span>
+					</div>
+				</div>
+				<div class="extended-item">
+					<Icon name="material-symbols:sunny" class="extended-icon icon-uv" />
+					<div class="extended-content">
+						<span class="extended-label dark:text-neutral-100">紫外线</span>
+						<span class="extended-value dark:text-neutral-100" data-uv>--</span>
+					</div>
+				</div>
+				<!-- 第五行：降水量和降水概率 -->
+				<div class="extended-item">
+					<Icon name="material-symbols:rainy" class="extended-icon icon-precipitation" />
+					<div class="extended-content">
+						<span class="extended-label dark:text-neutral-100">降水量</span>
+						<span class="extended-value dark:text-neutral-100" data-precipitation>--mm</span>
+					</div>
+				</div>
+				<div class="extended-item">
+					<Icon name="material-symbols:water-drop" class="extended-icon icon-pop" />
+					<div class="extended-content">
+						<span class="extended-label dark:text-neutral-100">降水概率</span>
+						<span class="extended-value dark:text-neutral-100" data-pop>--%</span>
+					</div>
+				</div>
+				<!-- 第六行：日出和日落 -->
+				<div class="extended-item">
+					<Icon name="material-symbols:wb-sunny" class="extended-icon icon-sunrise" />
+					<div class="extended-content">
+						<span class="extended-label dark:text-neutral-100">日出</span>
+						<span class="extended-value dark:text-neutral-100" data-sunrise>--:--</span>
+					</div>
+				</div>
+				<div class="extended-item">
+					<Icon name="material-symbols:sunny" class="extended-icon icon-sunset" />
+					<div class="extended-content">
+						<span class="extended-label dark:text-neutral-100">日落</span>
+						<span class="extended-value dark:text-neutral-100" data-sunset>--:--</span>
+					</div>
+				</div>
+				<!-- 污染物详情 -->
+				<div class="extended-item pollutants-item full-width" data-pollutants-section>
+					<Icon name="material-symbols:science" class="extended-icon icon-pollutants" />
+					<div class="extended-content pollutants-content">
+						<span class="extended-label text-neutral-900 dark:text-neutral-100">污染物浓度</span>
+						<div class="pollutants-grid">
+							<span class="pollutant text-neutral-900 dark:text-neutral-100">PM2.5: <span data-pm25>--</span></span>
+							<span class="pollutant text-neutral-900 dark:text-neutral-100">PM10: <span data-pm10>--</span></span>
+							<span class="pollutant text-neutral-900 dark:text-neutral-100">O₃: <span data-o3>--</span></span>
+							<span class="pollutant text-neutral-900 dark:text-neutral-100">NO₂: <span data-no2>--</span></span>
+							<span class="pollutant text-neutral-900 dark:text-neutral-100">SO₂: <span data-so2>--</span></span>
+							<span class="pollutant text-neutral-900 dark:text-neutral-100">CO: <span data-co>--</span></span>
+						</div>
 					</div>
 				</div>
 			</div>
-			<Icon
-				is:inline
-				name="material-symbols:wb-sunny-rounded"
-				class="weather-main-icon shrink-0 text-5xl text-(--primary)"
-				aria-hidden="true"
-				data-weather-main-icon
-			/>
-		</div>
 
-		<div class="mb-4 flex items-center justify-center gap-3 text-sm font-bold">
-			<span class="text-rose-500">高温 <span data-weather-high>--</span>° C</span>
-			<span class="h-4 w-px bg-(--line-color)"></span>
-			<span class="text-blue-500">低温 <span data-weather-low>--</span>° C</span>
-		</div>
-
-		<div class="weather-pills grid grid-cols-2 gap-2.5 border-t border-dashed border-(--line-color) pt-4">
-			<div class="weather-pill">
-				<Icon is:inline name="material-symbols:air-rounded" class="weather-pill-icon text-sky-500" />
-				<div>
-					<div class="weather-pill-label">风力</div>
-						<div class="weather-pill-value" data-weather-wind>未知</div>
-				</div>
+			<!-- 更新时间 -->
+			<div class="update-time">
+				<Icon name="material-symbols:schedule" class="time-icon dark:text-neutral-100" />
+				<span data-report-time class="time-text dark:text-neutral-100"></span>
 			</div>
-			<div class="weather-pill">
-				<Icon is:inline name="material-symbols:humidity-percentage-rounded" class="weather-pill-icon text-blue-500" />
-				<div>
-					<div class="weather-pill-label">湿度</div>
-						<div class="weather-pill-value" data-weather-humidity>--</div>
-				</div>
-			</div>
-			<div class="weather-pill">
-				<Icon is:inline name="material-symbols:device-thermostat-rounded" class="weather-pill-icon text-orange-500" />
-				<div>
-					<div class="weather-pill-label">体感温度</div>
-						<div class="weather-pill-value"><span data-weather-feels>--</span>° C</div>
-				</div>
-			</div>
-			<div class="weather-pill">
-				<Icon is:inline name="material-symbols:compress-rounded" class="weather-pill-icon text-violet-500" />
-				<div>
-					<div class="weather-pill-label">气压</div>
-						<div class="weather-pill-value"><span data-weather-pressure>--</span>hPa</div>
-				</div>
-			</div>
-			<div class="weather-pill">
-				<Icon is:inline name="material-symbols:filter-drama-rounded" class="weather-pill-icon text-slate-500" />
-				<div>
-					<div class="weather-pill-label">云量</div>
-						<div class="weather-pill-value"><span data-weather-cloud>--</span>%</div>
-				</div>
-			</div>
-			<div class="weather-pill">
-				<Icon is:inline name="material-symbols:water-drop-rounded" class="weather-pill-icon text-cyan-500" />
-				<div>
-					<div class="weather-pill-label">降水概率</div>
-						<div class="weather-pill-value"><span data-weather-rain-rate>--</span>%</div>
-				</div>
-			</div>
-			<div class="weather-pill">
-				<Icon is:inline name="material-symbols:rainy-rounded" class="weather-pill-icon text-cyan-500" />
-				<div>
-					<div class="weather-pill-label">降水量</div>
-						<div class="weather-pill-value"><span data-weather-rain>--</span>mm</div>
-				</div>
-			</div>
-			<div class="weather-pill">
-				<Icon is:inline name="material-symbols:sunny-rounded" class="weather-pill-icon text-amber-500" />
-				<div>
-					<div class="weather-pill-label">紫外线</div>
-						<div class="weather-pill-value" data-weather-uv>--</div>
-				</div>
-			</div>
-			<div class="weather-pill">
-				<Icon is:inline name="material-symbols:wb-twilight-rounded" class="weather-pill-icon text-amber-500" />
-				<div>
-					<div class="weather-pill-label">日出</div>
-						<div class="weather-pill-value" data-weather-sunrise>--:--</div>
-				</div>
-			</div>
-			<div class="weather-pill">
-				<Icon is:inline name="material-symbols:wb-twilight-rounded" class="weather-pill-icon text-orange-500" />
-				<div>
-					<div class="weather-pill-label">日落</div>
-						<div class="weather-pill-value" data-weather-sunset>--:--</div>
-				</div>
-			</div>
-		</div>
-
-		<div class="mt-4 rounded-2xl bg-rose-50 px-3 py-2 text-xs leading-relaxed text-rose-600 dark:bg-rose-950/20 dark:text-rose-300">
-			<div class="mb-1 font-bold">污染物浓度</div>
-			<div class="grid grid-cols-3 gap-x-2 gap-y-1">
-				<span>PM2.5: <b data-weather-pm25>--</b></span>
-				<span>PM10: <b data-weather-pm10>--</b></span>
-				<span>O₃: <b data-weather-o3>--</b></span>
-				<span>NO₂: <b data-weather-no2>--</b></span>
-				<span>SO₂: <b data-weather-so2>--</b></span>
-				<span>CO: <b data-weather-co>--</b></span>
-			</div>
-		</div>
-
-		<div class="mt-3 flex items-center justify-center gap-1.5 text-xs font-bold text-neutral-500 dark:text-neutral-400">
-			<Icon is:inline name="material-symbols:schedule-rounded" aria-hidden="true" />
-			<span data-weather-update>等待天气数据</span>
 		</div>
 	</div>
 </WidgetLayout>
 
 <style>
-	.weather-temp {
-		font-size: 3rem;
-		font-weight: 900;
-		letter-spacing: -0.08em;
-		color: var(--content);
+	.weather-container {
+		width: 100%;
 	}
 
-	.weather-main-icon {
-		filter: drop-shadow(0 10px 18px color-mix(in oklab, var(--primary) 35%, transparent));
+	/* 隐藏状态 */
+	.weather-hidden {
+		display: none !important;
 	}
 
-	.weather-pill {
+	/* 加载状态 */
+	.weather-loading {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 2rem;
+		gap: 0.75rem;
+	}
+
+	.loading-spinner {
+		width: 2rem;
+		height: 2rem;
+		border: 2px solid var(--primary);
+		border-top-color: var(--primary);
+		border-radius: 50%;
+		animation: spin 0.8s linear infinite;
+	}
+
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
+	.loading-text {
+		font-size: 0.875rem;
+		color: var(--primary);
+	}
+
+	/* 错误状态 */
+	.weather-error {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 1.5rem;
+		gap: 0.5rem;
+		text-align: center;
+	}
+
+	.error-icon {
+		font-size: 2rem;
+		color: #ef4444;
+	}
+
+	.error-text {
+		font-size: 0.875rem;
+		color: var(--primary);
+	}
+
+	.retry-btn {
 		display: flex;
 		align-items: center;
-		gap: 0.55rem;
-		min-width: 0;
-		border-radius: 999px;
-		padding: 0.55rem 0.7rem;
-		background: color-mix(in oklab, var(--btn-plain-bg-hover) 72%, transparent);
-		transition: background 0.2s ease, transform 0.2s ease;
+		gap: 0.25rem;
+		padding: 0.375rem 0.75rem;
+		margin-top: 0.5rem;
+		font-size: 0.75rem;
+		color: var(--primary);
+		background: transparent;
+		border: 1px solid var(--primary);
+		border-radius: 0.375rem;
+		cursor: pointer;
+		transition: all 0.2s ease;
 	}
 
-	.weather-pill:hover {
-		transform: translateY(-1px);
-		background: color-mix(in oklab, var(--primary) 10%, var(--btn-plain-bg-hover));
+	.retry-btn:hover {
+		background: var(--primary);
+		color: white;
 	}
 
-	.weather-pill-icon {
-		flex: 0 0 auto;
-		font-size: 1.25rem;
+	/* 天气内容 */
+	.weather-content {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		animation: fadeIn 0.5s ease;
 	}
 
-	.weather-pill-label {
-		font-size: 0.66rem;
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+			transform: translateY(8px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	.weather-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+	}
+
+	.location-info {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		flex-wrap: wrap;
+	}
+
+	.location-icon {
+		font-size: 1rem;
+		color: var(--primary);
+	}
+
+	.city-name,
+	.district {
+		font-weight: 600;
+		font-size: 1rem;
+	}
+
+	.weather-icon-wrapper {
+		flex-shrink: 0;
+	}
+
+	.weather-icon {
+		font-size: 3rem;
+		color: var(--primary);
+		animation: float 3s ease-in-out infinite;
+	}
+
+	@keyframes float {
+		0%,
+		100% {
+			transform: translateY(0);
+		}
+		50% {
+			transform: translateY(-4px);
+		}
+	}
+
+	.temperature-section {
+		display: flex;
+		align-items: baseline;
+		gap: 0.25rem;
+	}
+
+	.temperature {
+		font-size: 2.5rem;
 		font-weight: 700;
 		line-height: 1;
-		color: var(--meta-color);
 	}
 
-	.weather-pill-value {
-		margin-top: 0.2rem;
-		font-size: 0.8rem;
-		font-weight: 800;
-		line-height: 1.1;
-		color: var(--content);
+	.temperature-unit {
+		font-size: 1rem;
+		position: relative;
+		top: -1rem;
+		margin-left: 0.125rem;
+		color: #999;
+	}
+
+	.weather-desc {
+		margin-left: 0.5rem;
+		font-size: 1.5rem;
+	}
+
+	.temperature-range {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		font-size: 0.875rem;
+	}
+
+	.temp-max {
+		color: #ef4444;
+	}
+
+	.temp-min {
+		color: #3b82f6;
+	}
+
+	.temp-divider {
+		color: var(--primary);
+	}
+
+	.update-time {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.25rem;
+		font-size: 0.75rem;
+	}
+
+	.time-icon {
+		font-size: 0.875rem;
+	}
+
+	/* 扩展信息 */
+	.weather-extended {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 0.5rem;
+		padding-top: 1rem;
+		border-top: 1px dashed var(--primary);
+		justify-items: center;
+	}
+
+	.extended-item {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem;
+		border-radius: 0.5rem;
+		transition: transform 0.2s ease, box-shadow 0.2s ease;
+	}
+
+	.extended-item:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+	}
+
+	.extended-icon {
+		font-size: 1.25rem;
+		color: var(--primary);
+	}
+
+	/* 不同图标颜色 */
+	.icon-feels-like {
+		color: #f97316;
+	}
+
+	.icon-visibility {
+		color: #3b82f6;
+	}
+
+	.icon-pressure {
+		color: #8b5cf6;
+	}
+
+	.icon-uv {
+		color: #eab308;
+	}
+
+	.icon-precipitation {
+		color: #06b6d4;
+	}
+
+	.icon-cloud {
+		color: #64748b;
+	}
+
+	.icon-aqi {
+		color: #22c55e;
+	}
+
+	.icon-pollutants {
+		color: #ef4444;
+	}
+
+	.icon-sunrise {
+		color: #fbbf24;
+	}
+
+	.icon-sunset {
+		color: #fb923c;
+	}
+
+	.icon-pop {
+		color: #0ea5e9;
+	}
+
+	.extended-content {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.extended-label {
+		font-size: 0.625rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.extended-value {
+		font-size: 0.875rem;
+		font-weight: 500;
+	}
+
+	/* 全宽条目 */
+	.extended-item.full-width {
+		grid-column: 1 / -1;
+	}
+
+	/* 空气质量 */
+	.aqi-value {
+		font-weight: 600;
+	}
+
+	.aqi-tag {
+		font-size: 0.625rem;
+		padding: 0.125rem 0.375rem;
+		border-radius: 0.25rem;
+		margin-left: 0.25rem;
+	}
+
+	.aqi-good {
+		background: #22c55e;
+		color: white;
+	}
+
+	.aqi-moderate {
+		background: #eab308;
+		color: #1f2937;
+	}
+
+	.aqi-bad {
+		background: #ef4444;
+		color: white;
+	}
+
+	.aqi-level {
+		font-size: 0.75rem;
+		margin-left: 0.25rem;
+	}
+
+	/* 污染物网格 */
+	.pollutants-content {
+		width: 100%;
+	}
+
+	.pollutants-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 0.25rem;
+		margin-top: 0.25rem;
+	}
+
+	.pollutant {
+		font-size: 0.75rem;
+	}
+
+	/* 响应式调整 */
+	@media (max-width: 320px) {
+		.weather-extended {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	/* 响应式适配 */
+	@media (max-width: 380px) {
+		.weather-icon {
+			font-size: 2.5rem;
+		}
+
+		.temperature {
+			font-size: 2rem;
+		}
+
+		.pollutants-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+
+	/* 桌面端：折叠高度加大，避免温度范围被裁切 */
+	@media (min-width: 768px) {
+		:global(#weather-widget.collapsed) {
+			height: 10rem;
+		}
+	}
+
+	/* 深色模式优化 */
+	:global(html.dark) .extended-item:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+	}
+
+	:global(html.dark) .weather-icon {
+		color: var(--primary);
+	}
+
+	:global(html.dark) .temperature {
+		color: #fff;
 	}
 </style>
 
 <script is:inline data-swup-ignore-script>
-	(() => {
-		const fallbackWeather = {
-			location: "未知",
-			temp: "--",
-			text: "未知",
-			high: "--",
-			low: "--",
-			wind: "未知",
-			humidity: "--",
-			feels: "--",
-			pressure: "--",
-			cloud: "--",
-			rainRate: "--",
-			rain: "--",
-			uv: "--",
-			sunrise: "--:--",
-			sunset: "--:--",
-			pm25: "--",
-			pm10: "--",
-			o3: "--",
-			no2: "--",
-			so2: "--",
-			co: "--",
-			updateText: "天气数据未知",
+	(function () {
+		// ============================================================
+		// 缓存与 API 配置
+		// uapis.cn 免费 API，无需 Key，支持 IP 自动定位
+		// ============================================================
+		var CACHE_KEY = "weather_data_cache";
+		var CACHE_DURATION = 30 * 60 * 1000; // 30分钟缓存
+		var API_URL = "https://uapis.cn/api/v1/misc/weather?";
+
+		// ============================================================
+		// 缓存管理：将天气数据存入 localStorage，避免频繁请求
+		// ============================================================
+		var cacheManager = {
+			set: function (key, data) {
+				try {
+					localStorage.setItem(key, JSON.stringify({
+						data: data,
+						timestamp: Date.now()
+					}));
+				} catch (e) {
+					// 忽略存储错误（如隐私模式下 localStorage 不可用）
+				}
+			},
+			get: function (key) {
+				try {
+					var raw = localStorage.getItem(key);
+					if (!raw) return null;
+					var parsed = JSON.parse(raw);
+					// 超过缓存时间则视为过期
+					if (Date.now() - parsed.timestamp > CACHE_DURATION) {
+						localStorage.removeItem(key);
+						return null;
+					}
+					return parsed.data;
+				} catch (e) {
+					return null;
+				}
+			}
 		};
 
-		function setText(root, selector, value) {
-			const element = root.querySelector(selector);
-			if (element) element.textContent = String(value);
+		// 注意：astro-icon 在构建时渲染 SVG，运行时无法动态切换图标，
+		//       因此天气图标为静态默认图标（wb-sunny），天气状况通过文字描述展示。
+
+		// ============================================================
+		// 获取天气数据：根据 city/adcode 或 IP 自动定位
+		// 只有指定了城市或 adcode 时才缓存（IP 定位结果可能变化）
+		// ============================================================
+		async function fetchWeather(city, adcode, extended) {
+			var params = new URLSearchParams();
+			if (adcode) {
+				params.set("adcode", adcode);
+			} else if (city) {
+				params.set("city", city);
+			}
+			// 如果都没传，不传任何参数，让接口自动根据 IP 定位
+			if (extended) {
+				params.set("extended", "true");
+			}
+			// forecast=true 获取最高/最低温度
+			params.set("forecast", "true");
+
+			var url = API_URL + params.toString();
+			var response = await fetch(url);
+
+			if (!response.ok) {
+				throw new Error("请求失败: " + response.status);
+			}
+
+			var data = await response.json();
+
+			// 只有指定了城市或 adcode 时才缓存
+			if (adcode || city) {
+				var cacheKey = adcode ? "adcode_" + adcode : "city_" + city;
+				cacheManager.set(CACHE_KEY + cacheKey, data);
+			}
+
+			return data;
 		}
 
-		function renderWeather(root, weather) {
-			setText(root, "[data-weather-location]", weather.location);
-			setText(root, "[data-weather-temp]", weather.temp);
-			setText(root, "[data-weather-text]", weather.text);
-			setText(root, "[data-weather-high]", weather.high);
-			setText(root, "[data-weather-low]", weather.low);
-			setText(root, "[data-weather-wind]", weather.wind);
-			setText(root, "[data-weather-humidity]", `${weather.humidity}%`);
-			setText(root, "[data-weather-feels]", weather.feels);
-			setText(root, "[data-weather-pressure]", weather.pressure);
-			setText(root, "[data-weather-cloud]", weather.cloud);
-			setText(root, "[data-weather-rain-rate]", weather.rainRate);
-			setText(root, "[data-weather-rain]", weather.rain);
-			setText(root, "[data-weather-uv]", weather.uv);
-			setText(root, "[data-weather-sunrise]", weather.sunrise);
-			setText(root, "[data-weather-sunset]", weather.sunset);
-			setText(root, "[data-weather-pm25]", weather.pm25);
-			setText(root, "[data-weather-pm10]", weather.pm10);
-			setText(root, "[data-weather-o3]", weather.o3);
-			setText(root, "[data-weather-no2]", weather.no2);
-			setText(root, "[data-weather-so2]", weather.so2);
-			setText(root, "[data-weather-co]", weather.co);
-			setText(root, "[data-weather-update]", weather.updateText);
-		}
+		// ============================================================
+		// 更新 UI：将天气数据写入对应的 DOM 元素
+		// ============================================================
+		function updateUI(container, data, error) {
+			var loading = container.querySelector("[data-weather-loading]");
+			var errorEl = container.querySelector("[data-weather-error]");
+			var content = container.querySelector("[data-weather-content]");
+			var errorMsg = container.querySelector("[data-error-message]");
 
-		async function loadWeather() {
-			document.querySelectorAll("[data-weather-widget]").forEach(async (root) => {
-				const endpoint = root.getAttribute("data-weather-api-endpoint") || "";
-				if (!endpoint) {
-					renderWeather(root, fallbackWeather);
-					return;
+			// 隐藏加载状态
+			if (loading) loading.classList.add("weather-hidden");
+
+			if (error) {
+				// 有错误时显示错误信息
+				if (errorEl) errorEl.classList.remove("weather-hidden");
+				if (errorMsg) errorMsg.textContent = error;
+				return;
+			}
+
+			if (!data) return;
+
+			// 隐藏错误状态
+			if (errorEl) errorEl.classList.add("weather-hidden");
+
+			// 通用赋值函数
+			function setData(selector, value) {
+				var el = container.querySelector(selector);
+				if (el) el.textContent = value || "--";
+			}
+
+			setData("[data-city]", data.city);
+			setData("[data-district]", data.district);
+			setData("[data-temperature]", data.temperature);
+			setData("[data-weather]", data.weather);
+			setData("[data-wind]", data.wind_direction + " " + data.wind_power);
+			setData("[data-humidity]", data.humidity + "%");
+			setData("[data-report-time]", data.report_time);
+
+			// 最高/最低温度
+			setData("[data-temp-max]", data.temp_max != null ? String(data.temp_max) : "--");
+			setData("[data-temp-min]", data.temp_min != null ? String(data.temp_min) : "--");
+
+			// 更新扩展数据
+			var extendedSection = container.querySelector("[data-weather-extended]");
+			if (extendedSection) {
+				// 从 forecast 数组中获取日出日落时间和降水概率
+				var todayForecast = data.forecast && data.forecast.length > 0 ? data.forecast[0] : null;
+
+				setData("[data-feels-like]", data.feels_like != null ? data.feels_like + "°C" : "--°C");
+				setData("[data-visibility]", data.visibility != null ? data.visibility + "km" : "--km");
+				setData("[data-pressure]", data.pressure != null ? data.pressure + "hPa" : "--hPa");
+				setData("[data-uv]", data.uv != null ? String(data.uv) : "--");
+				setData("[data-precipitation]", data.precipitation != null ? data.precipitation + "mm" : "--mm");
+				setData("[data-cloud]", data.cloud != null ? data.cloud + "%" : "--%");
+				setData("[data-sunrise]", todayForecast ? (todayForecast.sunrise || "--:--") : "--:--");
+				setData("[data-sunset]", todayForecast ? (todayForecast.sunset || "--:--") : "--:--");
+				setData("[data-pop]", todayForecast && todayForecast.pop != null ? todayForecast.pop + "%" : "--%");
+
+				// 空气质量
+				var aqiEl = container.querySelector("[data-aqi]");
+				var aqiCategoryEl = container.querySelector("[data-aqi-category]");
+				if (data.aqi != null) {
+					if (aqiEl) aqiEl.textContent = String(data.aqi);
+					if (aqiCategoryEl) {
+						aqiCategoryEl.textContent = data.aqi_category || "--";
+						// 根据空气质量等级添加样式
+						aqiCategoryEl.className = "aqi-tag";
+						if (data.aqi_level === 1) aqiCategoryEl.classList.add("aqi-good");
+						else if (data.aqi_level === 2) aqiCategoryEl.classList.add("aqi-moderate");
+						else if (data.aqi_level >= 3) aqiCategoryEl.classList.add("aqi-bad");
+					}
+				} else {
+					if (aqiEl) aqiEl.textContent = "--";
+					if (aqiCategoryEl) aqiCategoryEl.textContent = "--";
 				}
+
+				// 污染物浓度
+				var pollutants = data.air_pollutants || {};
+				setData("[data-pm25]", pollutants.pm25 != null ? String(pollutants.pm25) : "--");
+				setData("[data-pm10]", pollutants.pm10 != null ? String(pollutants.pm10) : "--");
+				setData("[data-o3]", pollutants.o3 != null ? String(pollutants.o3) : "--");
+				setData("[data-no2]", pollutants.no2 != null ? String(pollutants.no2) : "--");
+				setData("[data-so2]", pollutants.so2 != null ? String(pollutants.so2) : "--");
+				setData("[data-co]", pollutants.co != null ? String(pollutants.co) : "--");
+			}
+
+			// 显示内容
+			if (content) content.classList.remove("weather-hidden");
+		}
+
+		// ============================================================
+		// 初始化单个天气组件
+		// 包含加载流程和重试按钮绑定
+		// ============================================================
+		function initWidget(container) {
+			// 防止重复初始化（swup 页面切换后可能再次调用）
+			if (container.dataset.weatherInitialized) return;
+			container.dataset.weatherInitialized = "true";
+
+			// 从 data 属性读取配置（由服务端渲染时写入）
+			var city = container.dataset.city || "";
+			var adcode = container.dataset.adcode || "";
+			var extended = container.dataset.extended !== "false";
+
+			var retryBtn = container.querySelector("[data-retry-btn]");
+			var content = container.querySelector("[data-weather-content]");
+			var loading = container.querySelector("[data-weather-loading]");
+			var errorEl = container.querySelector("[data-weather-error]");
+
+			async function loadWeather() {
+				// 显示加载状态，隐藏其他状态
+				if (loading) loading.classList.remove("weather-hidden");
+				if (errorEl) errorEl.classList.add("weather-hidden");
+				if (content) content.classList.add("weather-hidden");
 
 				try {
-					// 在这里接入你的天气接口。
-					// 建议接口由服务端根据访问者 IP 自动定位，不在浏览器里请求定位权限。
-					// 返回字段可以按 fallbackWeather 的结构适配。
-					const response = await fetch(endpoint, { credentials: "omit" });
-					if (!response.ok) throw new Error(`Weather API ${response.status}`);
-					const data = await response.json();
-					renderWeather(root, { ...fallbackWeather, ...data });
-				} catch (error) {
-					console.warn("天气接口加载失败，显示未知。", error);
-					renderWeather(root, fallbackWeather);
+					var data = await fetchWeather(city, adcode, extended);
+					updateUI(container, data);
+				} catch (e) {
+					updateUI(container, null, e.message || "获取天气信息失败");
 				}
-			});
+			}
+
+			// 重试按钮：清除缓存后重新加载
+			if (retryBtn) {
+				retryBtn.addEventListener("click", function () {
+					var cacheKey = adcode ? "adcode_" + adcode : (city ? "city_" + city : "ip_location");
+					localStorage.removeItem(CACHE_KEY + cacheKey);
+					loadWeather();
+				});
+			}
+
+			// 自动加载天气数据（基于用户浏览器 IP 定位）
+			loadWeather();
 		}
 
-		loadWeather();
-		document.addEventListener("swup:contentReplaced", loadWeather);
+		// ============================================================
+		// 初始化页面上所有天气组件
+		// ============================================================
+		function initAll() {
+			document.querySelectorAll("[data-weather-init]").forEach(initWidget);
+		}
+
+		// 首次加载时初始化
+		initAll();
+
+		// ============================================================
+		// Swup 页面切换后重新初始化
+		// swup 替换侧边栏 DOM 后，新插入的天气组件需要重新绑定事件
+		// ============================================================
+		if (window.swup) {
+			window.swup.hooks.on("page:view", initAll);
+		}
 	})();
 </script>

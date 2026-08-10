@@ -65,12 +65,12 @@ fzf-blog/
 │   └── anime-list.json                           # 番剧或动画列表数据
 ├── functions/                                    # 部署平台服务端函数目录，不放前端密钥
 │   └── api/
-│       ├── weather.ts                            # 天气服务端代理，读取 QWEATHER_API_KEY 后请求和风天气
+│       ├── weather.ts                            # 天气服务端代理（遗留，当前天气模块改用 uapis.cn 直连，此文件保留备用）
 │       ├── stats.ts                              # Umami 统计代理（用户名/密码认证方式，需配置 UMAMI_API_URL 等环境变量）
 │       └── umami-share.ts                        # Umami 统计代理（分享链接方式，通过同域代理绕过 CORS）
 ├── api/
-│   └── weather.ts                                # Vercel 原生 Serverless Function，转发 /api/weather 到天气代理逻辑
-├── src/cloudflare-worker.ts                       # Cloudflare Workers 入口，转发 /api/weather、/api/stats、/api/umami-share 到对应代理函数，其余路径交给 dist 静态资源
+│   └── weather.ts                                # Vercel 原生 Serverless Function（遗留，当前天气模块不再使用）
+├── src/cloudflare-worker.ts                       # Cloudflare Workers 入口，转发 /api/weather（遗留）、/api/stats、/api/umami-share 到对应代理函数，其余路径交给 dist 静态资源
 ├── scripts/                                      # 项目自动化脚本
 │   ├── generate-lqips.ts                         # 生成低质量图片占位数据
 │   ├── new-dynamic.js                            # 创建动态内容文件
@@ -343,7 +343,7 @@ fzf-blog/
 
 当前新增的侧边栏模块集中放在 `src/components/widget/`：`TimeGreeting.astro` 是带时间和图片预留位的问候卡片，`WeatherForecast.astro` 是可展开/收起的天气预报卡片，`DateProgress.astro` 是日期进度与节日倒计时，`Everydaysay.astro` 是今日一言，`VisitStats.astro` 是浏览数据统计。图片链接、天气 API、浏览统计 API 和自定义纪念日都在 `src/config/sidebarConfig.ts` 对应组件的 `customProps` 中修改。
 
-天气模块的前端只请求站内 `/api/weather`，真实和风天气凭据由 `functions/api/weather.ts` 在服务端读取运行时环境变量。Vercel 部署时由根目录 `api/weather.ts` 提供 Serverless Function，因此博客页面仍然是静态构建，只有天气接口是动态的；Cloudflare Workers 静态资源部署时由 `src/cloudflare-worker.ts` 接住 `/api/weather`，其它路径继续交给 `dist` 静态资源。必须配置 `QWEATHER_API_KEY` 和 `QWEATHER_API_HOST`：`QWEATHER_API_KEY` 是项目凭据页里的 API KEY，`QWEATHER_API_HOST` 是和风天气控制台“设置”页里的专属 API Host。Cloudflare 中要把这两个变量加到“变量和密钥/运行时变量”，不要只加到“构建变量”；Vercel 中要加到项目的 Environment Variables。不要把和风天气 Key 或 API Host 写入 `src/config/sidebarConfig.ts`、组件文件或任何 `PUBLIC_` 前缀环境变量；本地开发使用 `.dev.vars` 保存凭据，该文件已被 `.gitignore` 忽略。天气只使用部署平台提供的访问者经纬度自动查询，不设置固定兜底城市；如果平台无法提供位置、位置解析失败或天气接口异常，前端显示“未知/--”，不会展示固定模板城市。
+天气模块 `WeatherForecast.astro` 使用 uapis.cn 免费天气 API（`https://uapis.cn/api/v1/misc/weather`），无需 API Key，前端直接请求。数据流：浏览器 → uapis.cn API（根据访问者 IP 自动定位，或使用 `customProps` 中指定的 `city`/`adcode`）→ 前端渲染。组件包含加载中、错误重试、天气数据展示三种状态；展开后显示温度、高低温、风力、能见度、体感温度、湿度、气压、空气质量（AQI 及污染物浓度）、云量、紫外线、降水量、降水概率、日出日落等完整天气信息。配置在 `src/config/sidebarConfig.ts` 的 `weatherForecast.customProps` 中修改：`extended`（是否显示扩展信息，默认 true）、`city`（指定城市名，留空则 IP 自动定位）、`adcode`（指定城市编码，留空则 IP 自动定位）。不设置固定兜底城市；未指定 city/adcode 时由 API 根据访问者 IP 自动定位。组件使用 `data-swup-ignore-script` 防止 swup 重复执行，通过 `window.swup.hooks.on("page:view", ...)` 在页面切换后重新初始化新插入的天气组件。`functions/api/weather.ts`、`api/weather.ts` 和 `src/cloudflare-worker.ts` 中的 `/api/weather` 路由是旧版和风天气代理的遗留代码，当前天气模块不再使用，保留作为备用方案。
 
 浏览统计模块 `VisitStats.astro` 通过 Umami 分享链接 API 直接在前端读取统计数据（总浏览量、访问数、游客数），分享链接硬编码在组件 `<script>` 内的 `UMAMI_CONFIG.shareUrl` 中，修改时直接编辑该常量。数据流：浏览器 → Umami 分享 API（`blog.202685.xyz/api/share/...` 获取 websiteId 和 token → `blog.202685.xyz/api/websites/{id}/stats` 获取统计）→ 前端渲染带数字动画的统计卡片。卡片使用 IntersectionObserver 懒加载，仅在滚动到可视区域时才发起请求；点击卡片跳转到 Umami 分享页面查看详细数据。如果 Umami 服务不可用，显示备用数据（FALLBACK_STATS，默认 1000）。追踪脚本由 `src/config/analyticsConfig.ts` 的 `umamiAnalytics` 配置加载（`scriptUrl` 和 `websiteId`），与统计读取组件分离。`functions/api/umami-share.ts` 是同域代理备用方案，当前前端未使用，若将来遇到 CORS 跨域问题可切换为代理模式。
 

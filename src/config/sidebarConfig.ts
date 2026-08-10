@@ -73,11 +73,10 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 			// 是否在文章详情页显示
 			showOnPostPage: true,
 			customProps: {
-				// 天气接口走站内服务端代理，不要把和风天气 Key 写到前端。
-				// 部署时把真实密钥配置到环境变量 QWEATHER_API_KEY。
-				// 还需要在和风天气控制台“设置”页复制专属 API Host，配置到 QWEATHER_API_HOST。
-				// 不设置固定兜底城市；无法从访问者请求推断位置时，组件显示未知。
-				apiEndpoint: "/api/weather",
+				// 使用 uapis.cn 免费天气 API，无需 API Key，支持 IP 自动定位
+				// 不设置固定 city/adcode，由 API 根据访问者 IP 自动定位
+				// extended: true 显示扩展天气信息（风力、能见度、体感温度、空气质量等）
+				extended: true,
 			},
 		},
 		{

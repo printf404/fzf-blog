@@ -1,0 +1,19 @@
+
+/* 定义自定义字体 */
+@font-face {
+  font-family: "MiaoFont"; /* 给字体起个名字 */
+  src: url("/fonts/miao.ttf") format("truetype"); /* 注意这里是 truetype */
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap; /* 优化加载，防止页面空白 */
+}
+
+/* 全局应用字体 */
+:root {
+  font-family: "MiaoFont", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+}
+
+/* 强制应用到 body，提高优先级 */
+body {
+  font-family: "MiaoFont", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+}

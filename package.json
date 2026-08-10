@@ -98,6 +98,7 @@
     "postcss-import": "^16.1.1",
     "postcss-nesting": "^14.0.1",
     "rehype-callouts": "^2.2.0",
+    "sass-embedded": "^1.100.0",
     "subset-font": "^2.5.0"
   },
   "packageManager": "pnpm@9.14.4"
