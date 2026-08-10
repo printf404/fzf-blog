@@ -130,9 +130,10 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 			// 是否在文章详情页显示
 			showOnPostPage: true,
 			customProps: {
-				// 访问统计通过站内 /api/stats 代理从 Umami 获取数据。
-				// 部署时配置运行时环境变量：UMAMI_API_URL、UMAMI_USERNAME、UMAMI_PASSWORD、UMAMI_WEBSITE_ID。
-				apiEndpoint: "/api/stats",
+				// 访问统计通过 Umami 分享链接读取公开统计数据，卡片可点击跳转分享页。
+				// 在 Umami 后台的“分享”中添加分享链接后，填到 shareUrl。
+				shareUrl: "https://umami-steel-eta.vercel.app/share/vl68tXaDfKb7xDtF",
+				apiEndpoint: "",
 				provider: "umami",
 			},
 		},

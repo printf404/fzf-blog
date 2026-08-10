@@ -14,6 +14,7 @@ const apiEndpoint =
 	typeof customProps.apiEndpoint === "string" ? customProps.apiEndpoint : "";
 const provider =
 	typeof customProps.provider === "string" ? customProps.provider : "custom";
+const shareUrl = typeof customProps.shareUrl === "string" ? customProps.shareUrl : "";
 const showTitle = widgetConfig?.showTitle !== false;
 ---
 
@@ -29,32 +30,40 @@ const showTitle = widgetConfig?.showTitle !== false;
 		data-visit-stats
 		data-visit-stats-api-endpoint={apiEndpoint}
 		data-visit-stats-provider={provider}
+		data-visit-stats-share-url={shareUrl}
 	>
-		<div class="text-center">
-			<div
-				class="visit-stats-total font-mono text-4xl font-black leading-none tracking-tight text-neutral-900 transition dark:text-neutral-50"
-				data-visit-stats-total
-			>
-				--
+		<a
+			class="visit-stats-link block transition active:scale-95"
+			data-visit-stats-link
+			target="_blank"
+			rel="noopener noreferrer"
+		>
+			<div class="text-center">
+				<div
+					class="visit-stats-total font-mono text-4xl font-black leading-none tracking-tight text-neutral-900 transition dark:text-neutral-50"
+					data-visit-stats-total
+				>
+					--
+				</div>
+				<div class="mt-1 text-sm font-bold text-neutral-500 dark:text-neutral-400" data-visit-stats-total-label>总浏览量</div>
 			</div>
-			<div class="mt-1 text-sm font-bold text-neutral-500 dark:text-neutral-400" data-visit-stats-total-label>总浏览量</div>
-		</div>
 
-		<div class="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-			<div class="text-center">
-				<div class="font-mono text-2xl font-black text-neutral-900 transition dark:text-neutral-50" data-visit-stats-visits>
-					--
+			<div class="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+				<div class="text-center">
+					<div class="font-mono text-2xl font-black text-neutral-900 transition dark:text-neutral-50" data-visit-stats-visits>
+						--
+					</div>
+					<div class="mt-1 text-sm font-bold text-neutral-500 dark:text-neutral-400" data-visit-stats-visits-label>访问数</div>
 				</div>
-				<div class="mt-1 text-sm font-bold text-neutral-500 dark:text-neutral-400" data-visit-stats-visits-label>访问数</div>
-			</div>
-			<div class="h-10 w-px bg-(--line-color)"></div>
-			<div class="text-center">
-				<div class="font-mono text-2xl font-black text-neutral-900 transition dark:text-neutral-50" data-visit-stats-visitors>
-					--
+				<div class="h-10 w-px bg-(--line-color)"></div>
+				<div class="text-center">
+					<div class="font-mono text-2xl font-black text-neutral-900 transition dark:text-neutral-50" data-visit-stats-visitors>
+						--
+					</div>
+					<div class="mt-1 text-sm font-bold text-neutral-500 dark:text-neutral-400" data-visit-stats-visitors-label>游客数</div>
 				</div>
-				<div class="mt-1 text-sm font-bold text-neutral-500 dark:text-neutral-400" data-visit-stats-visitors-label>游客数</div>
 			</div>
-		</div>
+		</a>
 
 		<div class="mt-3 text-center text-[0.7rem] font-bold text-neutral-400 dark:text-neutral-500" data-visit-stats-note>
 			等待统计 API 接入
@@ -66,11 +75,22 @@ const showTitle = widgetConfig?.showTitle !== false;
 	.visit-stats-total {
 		text-shadow: 0 10px 22px color-mix(in oklab, var(--primary) 22%, transparent);
 	}
+
+	.visit-stats-link[href] {
+		cursor: pointer;
+	}
+
+	.visit-stats-link:not([href]) {
+		pointer-events: none;
+	}
 </style>
 
 <script is:inline data-swup-ignore-script>
 	(() => {
 		function formatCompact(value) {
+			if (value === "--" || value === null || value === undefined) return "--";
+			value = Number(value);
+			if (!Number.isFinite(value)) return "--";
 			if (value >= 1000) return `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}K`;
 			return String(value);
 		}
@@ -82,8 +102,8 @@ const showTitle = widgetConfig?.showTitle !== false;
 
 		function renderStats(root, stats, note) {
 			setText(root, "[data-visit-stats-total]", formatCompact(stats.totalViews));
-			setText(root, "[data-visit-stats-visits]", stats.visits);
-			setText(root, "[data-visit-stats-visitors]", stats.visitors);
+			setText(root, "[data-visit-stats-visits]", formatCompact(stats.visits));
+			setText(root, "[data-visit-stats-visitors]", formatCompact(stats.visitors));
 			if (stats.totalLabel) setText(root, "[data-visit-stats-total-label]", stats.totalLabel);
 			if (stats.visitsLabel) setText(root, "[data-visit-stats-visits-label]", stats.visitsLabel);
 			if (stats.visitorsLabel)
@@ -97,6 +117,73 @@ const showTitle = widgetConfig?.showTitle !== false;
 				visits: "--",
 				visitors: "--",
 			};
+		}
+
+		function getFieldValue(field) {
+			if (typeof field === "object" && field) return Number(field.value) || 0;
+			return Number(field) || 0;
+		}
+
+		function parseUmamiShareUrl(shareUrl) {
+			const url = new URL(shareUrl);
+			const sharePath = url.pathname.split("/share/")[1];
+			if (!sharePath) throw new Error("Invalid Umami share URL");
+
+			let apiBase = `${url.origin}/api`;
+			if (
+				shareUrl.includes("cloud.umami.is") ||
+				shareUrl.includes("analytics.umami.is")
+			) {
+				const region = shareUrl.includes("/analytics/eu/") ? "eu" : "us";
+				apiBase = `https://cloud.umami.is/analytics/${region}/api`;
+			}
+
+			return { apiBase, sharePath, url };
+		}
+
+		async function loadUmamiShareStats(root, shareUrl) {
+			const link = root.querySelector("[data-visit-stats-link]");
+			if (link) link.setAttribute("href", shareUrl);
+
+			const { apiBase, sharePath } = parseUmamiShareUrl(shareUrl);
+			const shareResponse = await fetch(`${apiBase}/share/${sharePath}`, {
+				credentials: "omit",
+			});
+			if (!shareResponse.ok)
+				throw new Error(`Umami share API ${shareResponse.status}`);
+
+			const shareData = await shareResponse.json();
+			const websiteId = shareData.websiteId;
+			const shareToken = shareData.token;
+			if (!websiteId || !shareToken) throw new Error("Invalid Umami share data");
+
+			const endAt = Date.now();
+			const statsUrl = new URL(`${apiBase}/websites/${websiteId}/stats`);
+			statsUrl.searchParams.set("startAt", "0");
+			statsUrl.searchParams.set("endAt", String(endAt));
+			statsUrl.searchParams.set("unit", "hour");
+			statsUrl.searchParams.set("timezone", "Asia/Shanghai");
+
+			const statsResponse = await fetch(statsUrl.toString(), {
+				credentials: "omit",
+				headers: {
+					"x-umami-share-context": "1",
+					"x-umami-share-token": shareToken,
+				},
+			});
+			if (!statsResponse.ok)
+				throw new Error(`Umami stats API ${statsResponse.status}`);
+
+			const data = await statsResponse.json();
+			renderStats(
+				root,
+				{
+					totalViews: getFieldValue(data.pageviews),
+					visits: getFieldValue(data.visits),
+					visitors: getFieldValue(data.visitors),
+				},
+				"Umami 统计",
+			);
 		}
 
 		function normalizeWalineArticle(data) {
@@ -147,7 +234,12 @@ const showTitle = widgetConfig?.showTitle !== false;
 			document.querySelectorAll("[data-visit-stats]").forEach(async (root) => {
 				const endpoint = root.getAttribute("data-visit-stats-api-endpoint") || "";
 				const provider = root.getAttribute("data-visit-stats-provider") || "custom";
-				if (!endpoint) {
+				const shareUrl = root.getAttribute("data-visit-stats-share-url") || "";
+				if (shareUrl) {
+					const link = root.querySelector("[data-visit-stats-link]");
+					if (link) link.setAttribute("href", shareUrl);
+				}
+				if (!endpoint && !shareUrl) {
 					renderStats(root, getUnknownStats(), "统计数据未知");
 					return;
 				}
@@ -159,6 +251,10 @@ const showTitle = widgetConfig?.showTitle !== false;
 					}
 
 					if (provider === "umami") {
+						if (shareUrl) {
+							await loadUmamiShareStats(root, shareUrl);
+							return;
+						}
 						await loadUmamiStats(root, endpoint);
 						return;
 					}

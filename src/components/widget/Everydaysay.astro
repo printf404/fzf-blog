@@ -2,9 +2,11 @@
 import { getCollection } from "astro:content";
 import WidgetLayout from "@/components/common/WidgetLayout.astro";
 
-// 从 content/ziyuan/everyday.md 读取名言数据
+// 从 src/content/Otherfile/everyday.md 读取每日一言数据
 const entries = await getCollection("EveryDaysay");
-const everydayEntry = entries.find((e) => e.id === "everyday.md");
+const everydayEntry =
+	entries.find((e) => e.id === "everyday" || e.id === "everyday.md") ??
+	entries[0];
 const everydayData = everydayEntry?.data as any;
 const everydays = everydayData?.everydays || [];
 
@@ -27,11 +29,11 @@ const everyday = everydays[randomIndex] || { text: "暂无名言", author: "" };
 
 <WidgetLayout name="✨ 今日一言" id="everyday-of-the-day" class={className} style={style}>
 	<div class="everyday-content">
-		<blockeveryday class="everyday-text">
+		<blockquote class="everyday-text">
 			<span class="everyday-mark">"</span>
 			{everyday.text}
 			<span class="everyday-mark">"</span>
-		</blockeveryday>
+		</blockquote>
 		<cite class="everyday-author">—— {everyday.author}</cite>
 	</div>
 </WidgetLayout>
