@@ -70,7 +70,7 @@ fzf-blog/
 │       └── umami-share.ts                        # Umami 统计代理（分享链接方式，通过同域代理绕过 CORS）
 ├── api/
 │   └── weather.ts                                # Vercel 原生 Serverless Function，转发 /api/weather 到天气代理逻辑
-├── src/cloudflare-worker.ts                       # Cloudflare Workers 静态资源部署入口，转发 /api/weather 并托管 dist
+├── src/cloudflare-worker.ts                       # Cloudflare Workers 入口，转发 /api/weather、/api/stats、/api/umami-share 到对应代理函数，其余路径交给 dist 静态资源
 ├── scripts/                                      # 项目自动化脚本
 │   ├── generate-lqips.ts                         # 生成低质量图片占位数据
 │   ├── new-dynamic.js                            # 创建动态内容文件
@@ -345,7 +345,7 @@ fzf-blog/
 
 天气模块的前端只请求站内 `/api/weather`，真实和风天气凭据由 `functions/api/weather.ts` 在服务端读取运行时环境变量。Vercel 部署时由根目录 `api/weather.ts` 提供 Serverless Function，因此博客页面仍然是静态构建，只有天气接口是动态的；Cloudflare Workers 静态资源部署时由 `src/cloudflare-worker.ts` 接住 `/api/weather`，其它路径继续交给 `dist` 静态资源。必须配置 `QWEATHER_API_KEY` 和 `QWEATHER_API_HOST`：`QWEATHER_API_KEY` 是项目凭据页里的 API KEY，`QWEATHER_API_HOST` 是和风天气控制台“设置”页里的专属 API Host。Cloudflare 中要把这两个变量加到“变量和密钥/运行时变量”，不要只加到“构建变量”；Vercel 中要加到项目的 Environment Variables。不要把和风天气 Key 或 API Host 写入 `src/config/sidebarConfig.ts`、组件文件或任何 `PUBLIC_` 前缀环境变量；本地开发使用 `.dev.vars` 保存凭据，该文件已被 `.gitignore` 忽略。天气只使用部署平台提供的访问者经纬度自动查询，不设置固定兜底城市；如果平台无法提供位置、位置解析失败或天气接口异常，前端显示“未知/--”，不会展示固定模板城市。
 
-浏览统计模块 `VisitStats.astro` 通过 `src/config/sidebarConfig.ts` 中的 `visitStats.customProps` 接入统计服务。当前配置使用 Umami 分享链接方式：前端将 `shareUrl` 传给同域代理 `/api/umami-share`，由 `functions/api/umami-share.ts` 在服务端转发请求到 Umami API 并返回统计数据，避免了浏览器跨域（CORS）拦截。卡片点击后跳转到 Umami 分享页面查看详细数据。如果未配置接口、Umami 服务不可用或请求超时，组件显示"-- / 统计服务暂不可用"，不会使用模板数据。
+浏览统计模块 `VisitStats.astro` 通过 Umami 分享链接 API 直接在前端读取统计数据（总浏览量、访问数、游客数），分享链接硬编码在组件 `<script>` 内的 `UMAMI_CONFIG.shareUrl` 中，修改时直接编辑该常量。数据流：浏览器 → Umami 分享 API（`blog.202685.xyz/api/share/...` 获取 websiteId 和 token → `blog.202685.xyz/api/websites/{id}/stats` 获取统计）→ 前端渲染带数字动画的统计卡片。卡片使用 IntersectionObserver 懒加载，仅在滚动到可视区域时才发起请求；点击卡片跳转到 Umami 分享页面查看详细数据。如果 Umami 服务不可用，显示备用数据（FALLBACK_STATS，默认 1000）。追踪脚本由 `src/config/analyticsConfig.ts` 的 `umamiAnalytics` 配置加载（`scriptUrl` 和 `websiteId`），与统计读取组件分离。`functions/api/umami-share.ts` 是同域代理备用方案，当前前端未使用，若将来遇到 CORS 跨域问题可切换为代理模式。
 
 时间问候模块的图片在 `src/config/sidebarConfig.ts` 的 `timeGreeting.customProps.greetingImages` 中维护，当前已按“黎明、早晨、上午、中午、下午、晚上、深夜”填入图床链接。`src/components/widget/TimeGreeting.astro` 会根据访问者当前时间自动切换问候文案和对应图片。
 

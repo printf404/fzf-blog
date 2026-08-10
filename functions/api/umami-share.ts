@@ -1,3 +1,21 @@
+/**
+ * Umami 统计代理（分享链接方式）
+ *
+ * 当前前端 VisitStats.astro 直接请求 Umami API，不经过此代理。
+ * 此代理作为备用方案保留：如果将来遇到 CORS 跨域问题，
+ * 可将 VisitStats.astro 的请求改为 /api/umami-share?share=... 走同域代理。
+ *
+ * 工作流程：
+ *   1. 从环境变量 UMAMI_SHARE_URL 或查询参数 ?share= 获取分享链接
+ *   2. 请求 Umami /api/share/{sharePath} 获取 websiteId 和 token
+ *   3. 用 token 请求 /api/websites/{websiteId}/stats 获取统计数据
+ *   4. 返回 { totalViews, visits, visitors } 给前端
+ *
+ * 缓存策略：
+ *   - 分享配置（websiteId、token）缓存 30 分钟
+ *   - 统计数据缓存 5 分钟
+ */
+
 type RuntimeEnv = {
 	UMAMI_SHARE_URL?: string;
 };
