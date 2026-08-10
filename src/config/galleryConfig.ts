@@ -17,8 +17,8 @@ export const galleryConfig: GalleryConfig = {
 		// 每添加一个数组项就相当于添加了一个相册，记得在 public/gallery/ 目录下创建对应的子目录并放入图片
 		{
 			id: "相册",
-			name: "测试相册",
-			description: "测试相册描述",
+			name: "相册",
+			description: "放一些照片记录",
 			location: "月球",
 			date: "2026-08-04",
 			tags: ["相册", "测试"],
@@ -27,12 +27,12 @@ export const galleryConfig: GalleryConfig = {
 			id: "相册",
 			name: "加密相册示例",
 			description:
-				"这是一个加密相册的示例，设置了访问密码，只有输入正确的密码才能查看相册内容。",
+				"这是一个加密相册,设置了访问密码，只有输入正确的密码才能查看相册内容。",
 			location: "月球",
 			date: "1939-09-01",
 			tags: ["加密相册", "测试"],
-			password: "123456",
-			passwordHint: "示例密码123456",
+			password: "404",
+			passwordHint: "居然想偷看",
 		},
 	],
 

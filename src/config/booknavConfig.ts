@@ -71,7 +71,7 @@ export const booknavConfig: BooknavGroup[] = [
 		id: "opensource",
 		name: "项目",
 		icon: "material-symbols:code-rounded",
-		desc: "好用的开源项目",
+		desc: "使用的开源项目",
 		weight: 90,
 		items: [
 			{
@@ -128,6 +128,24 @@ export const booknavConfig: BooknavGroup[] = [
 				url: "https://carbon.now.sh",
 				desc: "把代码片段生成漂亮的图片",
 				weight: 8,
+			},
+			{
+				title: "bilibili视频提取",
+				url: "https://snapany.com/zh/bilibili",
+				desc: "提取B站视频下载地址",
+				weight: 11,
+			},
+			{
+				title: "Mp3音频转换",
+				url: "https://www.freeconvert.com/zh-CN/mp3-converter",
+				desc: "可将任意文件转为mp3音频格式",
+				weight: 12,
+			},
+			{
+				title: "网易云音乐提取器",
+				url: "https://yy.luodian.net.cn/",
+				desc: "网易云音乐内容下载",
+				weight: 12,
 			},
 		],
 	},
