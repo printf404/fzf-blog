@@ -2,7 +2,7 @@
 /* 定义自定义字体 */
 @font-face {
   font-family: "MiaoFont"; /* 给字体起个名字 */
-  src: url("/fonts/miao.ttf") format("truetype"); /* 注意这里是 truetype */
+  src: url("/assets/fonts/miao.ttf") format("truetype"); /* public/assets/fonts 会以 /assets/fonts 路径访问 */
   font-weight: normal;
   font-style: normal;
   font-display: swap; /* 优化加载，防止页面空白 */
