@@ -3,30 +3,45 @@ media:
     label: 站点资源
     input: public/assets
     output: /assets
+    categories: [image, document, audio, video, compressed, code, font]
+    rename: false
+  - name: post-images
+    label: 文章图片
+    input: src/content/posts/images
+    output: ./images
     categories: [image]
+    rename: safe
+  - name: music-lrc
+    label: 音乐歌词
+    input: public/assets/music/lrc
+    output: /assets/music/lrc
+    extensions: [lrc, txt]
+    rename: false
 
 content:
-  - name: blog-posts
-    label: 📝 博客文章
+  - name: writing
+    label: 内容发布
     type: group
     items:
       - name: posts
-        label: 📝 博客文章
+        label: 博客文章
         type: collection
         path: src/content/posts
         format: yaml-frontmatter
         filename:
-          template: "{year}-{month}-{day}-{primary}.md"
+          template: "{primary}.md"
           field: create
         view:
           primary: title
-          fields: [title, published, tags, category, draft, pinned]
+          fields: [title, published, category, tags, draft, pinned]
           sort: ["published desc", "title asc"]
         fields:
           - name: title
             label: 标题
             type: string
             required: true
+            options:
+              maxlength: 120
           - name: published
             label: 发布时间
             type: date
@@ -34,17 +49,255 @@ content:
             options:
               time: false
               format: yyyy-MM-dd
+          - name: updated
+            label: 更新时间
+            type: date
+            description: 可选；文章修改后需要展示更新时间时填写。
+            options:
+              time: false
+              format: yyyy-MM-dd
+          - name: description
+            label: 摘要
+            type: text
+            description: 用于文章列表、SEO 和分享卡片。
+            options:
+              maxlength: 280
+          - name: slug
+            label: 自定义别名
+            type: string
+            description: 可选；用于记录自定义文章别名，文件名仍由 PagesCMS 创建时决定。
+          - name: image
+            label: 封面图
+            type: image
+            description: 可选择本地文章图片，也可以手动粘贴外链。
+            options:
+              media: post-images
+              path: ""
+              extensions: [jpg, jpeg, png, webp, avif, gif]
+              rename: safe
           - name: tags
             label: 标签
             type: select
             options:
               multiple: true
-              creatable: true
+              placeholder: 选择文章标签
+              values:
+                - 博客
+                - 声明
+                - 游戏
+                - games
+                - 教程
+                - 生活
+                - 技术
+                - Astro
+                - Svelte
+                - 音乐
+          - name: category
+            label: 分类
+            type: select
+            options:
+              placeholder: 选择文章分类
+              values:
+                - 声明
+                - 游戏
+                - 教程
+                - 技术
+                - 生活
+                - 音乐
+                - 随笔
+          - name: lang
+            label: 语言
+            type: select
+            options:
+              values:
+                - name: zh-CN
+                  label: 简体中文
+                - name: zh-TW
+                  label: 繁体中文
+                - name: en
+                  label: English
+                - name: ja
+                  label: 日本語
+          - name: draft
+            label: 草稿
+            type: boolean
+            description: 开启后不作为正式文章发布。
+          - name: pinned
+            label: 置顶
+            type: boolean
+          - name: author
+            label: 作者
+            type: string
+            default: FZF404
+          - name: sourceLink
+            label: 原文链接
+            type: string
+            description: 转载或同步文章时填写。
+          - name: licenseName
+            label: 许可协议名称
+            type: string
+          - name: licenseUrl
+            label: 许可协议链接
+            type: string
+          - name: comment
+            label: 开启评论
+            type: boolean
+            default: true
+          - name: password
+            label: 访问密码
+            type: string
+            description: 留空表示不加密。
+          - name: passwordHint
+            label: 密码提示
+            type: string
+          - name: prevTitle
+            label: false
+            type: string
+            hidden: true
+            default: ""
+          - name: prevSlug
+            label: false
+            type: string
+            hidden: true
+            default: ""
+          - name: nextTitle
+            label: false
+            type: string
+            hidden: true
+            default: ""
+          - name: nextSlug
+            label: false
+            type: string
+            hidden: true
+            default: ""
           - name: body
             label: 正文
             type: rich-text
             required: true
 
+      - name: dynamics
+        label: 动态/说说
+        type: collection
+        path: src/content/dynamic
+        format: yaml-frontmatter
+        filename:
+          template: "{year}-{month}-{day}-{hour}{minute}{second}.md"
+          field: create
+        view:
+          primary: published
+          fields: [published, location, pinned]
+          sort: ["published desc"]
+        fields:
+          - name: published
+            label: 发布时间
+            type: date
+            required: true
+            options:
+              time: true
+              format: yyyy-MM-dd HH:mm:ss
+          - name: location
+            label: 位置
+            type: string
+            description: 可选，例如“月球”。
+          - name: pinned
+            label: 置顶
+            type: boolean
+          - name: body
+            label: 动态内容
+            type: rich-text
+            required: true
+
+  - name: pages
+    label: 独立页面
+    type: group
+    items:
+      - name: about
+        label: 关于页面
+        type: file
+        path: src/content/spec/about.md
+        format: code
+      - name: guestbook
+        label: 留言板页面
+        type: file
+        path: src/content/spec/guestbook.md
+        format: yaml-frontmatter
+        fields:
+          - name: title
+            label: 标题
+            type: string
+          - name: description
+            label: 描述
+            type: text
+          - name: body
+            label: 正文
+            type: rich-text
+      - name: friends
+        label: 友链页面
+        type: file
+        path: src/content/spec/friends.mdx
+        format: code
+
+  - name: widgets
+    label: 小组件内容
+    type: group
+    items:
+      - name: everyday-say
+        label: 每日一言
+        type: file
+        path: src/content/Otherfile/everyday.md
+        format: yaml-frontmatter
+        fields:
+          - name: title
+            label: 标题
+            type: string
+            required: true
+          - name: everydays
+            label: 句子列表
+            type: object
+            list:
+              collapsible:
+                collapsed: true
+                summary: "{text} —— {author}"
+            fields:
+              - name: text
+                label: 句子
+                type: text
+                required: true
+              - name: author
+                label: 作者
+                type: string
+                required: true
+
+  - name: config
+    label: 常用配置
+    type: group
+    items:
+      - name: music-config
+        label: 音乐配置
+        type: file
+        path: src/config/musicConfig.ts
+        format: code
+      - name: site-config
+        label: 站点配置
+        type: file
+        path: src/config/siteConfig.ts
+        format: code
+      - name: navbar-config
+        label: 导航配置
+        type: file
+        path: src/config/navBarConfig.ts
+        format: code
+      - name: sidebar-config
+        label: 侧边栏配置
+        type: file
+        path: src/config/sidebarConfig.ts
+        format: code
+
 settings:
   content:
     merge: false
+  commit:
+    templates:
+      create: "content: 新增 {name}"
+      update: "content: 更新 {name}"
+      delete: "content: 删除 {name}"
