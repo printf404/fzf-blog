@@ -67,7 +67,7 @@ export const booknavConfig: BooknavGroup[] = [
 	{
 		id: "mytools",
 		name: "我的网站",
-		icon: "material-symbols:toolbox",
+		icon: "material-symbols:build",
 		desc: "使用的服务管理",
 		weight: 1,
 		items: [
