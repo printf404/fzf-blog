@@ -260,7 +260,7 @@ export const booknavConfig: BooknavGroup[] = [
 	{
 		id: "ziyuan",
 		name: "资源网站",
-		icon: "material-symbols:folder_special",
+		icon: "material-symbols:folder-open-rounded",
 		desc: "众多资源网站",
 		weight: 20,
 		items: [
