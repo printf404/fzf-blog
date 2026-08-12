@@ -17,6 +17,13 @@ media:
     output: /assets/music/lrc
     extensions: [lrc, txt]
     rename: false
+  - name: gallery-images
+    label: 相册图片
+    input: public/gallery
+    output: /gallery
+    categories: [image]
+    rename: false
+    description: 上传图片到相册目录，子目录名需与相册 id 一致。支持 jpg/png/webp/avif/gif。cover.* 会自动作为封面。
 
 content:
   - name: writing
@@ -292,6 +299,31 @@ content:
         type: file
         path: src/config/sidebarConfig.ts
         format: code
+
+  - name: gallery
+    label: 相册管理
+    type: group
+    items:
+      - name: gallery-config
+        label: 相册列表配置
+        type: file
+        path: src/config/galleryConfig.ts
+        format: code
+        description: >-
+          管理相册列表和瀑布流参数。每添加一个相册，需在 public/gallery/ 下创建对应 id 的子目录，
+          然后放入图片文件或创建 urls.txt 添加远程图片URL。cover.* 会自动作为封面。
+      - name: firefly-2026-urls
+        label: Firefly相册 - 远程图片URL
+        type: file
+        path: public/gallery/firefly-2026/urls.txt
+        format: code
+        description: 每行一个图片URL，# 开头为注释，空行会被忽略。
+      - name: encrypted-test-urls
+        label: 加密相册 - 远程图片URL
+        type: file
+        path: public/gallery/encrypted-test/urls.txt
+        format: code
+        description: 每行一个图片URL，# 开头为注释，空行会被忽略。
 
 settings:
   content:
