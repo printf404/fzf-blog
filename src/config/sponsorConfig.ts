@@ -62,13 +62,13 @@ export const sponsorConfig: SponsorConfig = {
 		// 示例：已实名打赏者
 		{
 			name: "委员长",
-			avatar: "https://tu.202685.xyz/file/1786086160577_委员长.webp",
+			avatar: "https://tu.202685.xyz/file/1786629329566_委员长.jpeg",
 			amount: "1.2万亿金圆券",
 			date: "1949-12-10",
 		},
 		{
 			name: "邪恶的冰岛入",
-			avatar: "https://tu.202685.xyz/file/1786086177599_冰岛入.webp",
+			avatar: "https://tu.202685.xyz/file/1786629329003_冰岛入.jpeg",
 			amount: "抢走了我10个亿",
 			date: "1939-9-10",
 		},

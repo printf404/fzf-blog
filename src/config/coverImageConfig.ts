@@ -32,9 +32,9 @@ export const coverImageConfig: CoverImageConfig = {
 		enable: true,
 		// 封面图API列表
 		apis: [
-			"https://tu.202685.xyz/file/1786093927091_伊雷娜.webp",
-			"https://tu.202685.xyz/file/1786093921475_西苏精神.webp",
-			"https://tu.202685.xyz/file/1786093923668_观察员.webp",
+			"https://tu.202685.xyz/file/1786629281542_伊雷娜.jpeg",
+			"https://tu.202685.xyz/file/1786629044779_西苏精神.jpeg",
+			"https://tu.202685.xyz/file/1786629047904_观察员.jpeg",
 		],
 	},
 };

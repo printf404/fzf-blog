@@ -4,7 +4,7 @@ published: 2026-08-07
 updated: 2026-08-11
 description: 一些游戏文件分享
 slug: games
-image: https://tu.202685.xyz/file/1786105897982_icon.png
+image: https://tu.202685.xyz/file/1786628995891_photo_2026-08-13_21-42-58.jpg
 tags:
   - 游戏
   - 博客

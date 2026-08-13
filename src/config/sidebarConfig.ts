@@ -152,13 +152,13 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 			customProps: {
 				// 问候图片链接，会根据当前时间自动切换
 				greetingImages: {
-					黎明: "https://tu.202685.xyz/file/1786257814716_liming.webp",
-					早晨: "https://tu.202685.xyz/file/1786257815800_zaochen.webp",
-					上午: "https://tu.202685.xyz/file/1786257811956_shangwu.webp",
-					中午: "https://tu.202685.xyz/file/1786257814664_zhongwu.webp",
-					下午: "https://tu.202685.xyz/file/1786257817003_xiawu.webp",
-					晚上: "https://tu.202685.xyz/file/1786257819272_wanshang.webp",
-					深夜: "https://tu.202685.xyz/file/1786257820552_shenye.webp",
+					黎明: "https://tu.202685.xyz/file/1786629062513_liming.jpeg",
+				早晨: "https://tu.202685.xyz/file/1786629278188_zaochen.jpeg",
+				上午: "https://tu.202685.xyz/file/1786629273130_shangwu.jpeg",
+				中午: "https://tu.202685.xyz/file/1786629268096_zhongwu.jpeg",
+				下午: "https://tu.202685.xyz/file/1786629065320_xiawu.jpeg",
+				晚上: "https://tu.202685.xyz/file/1786629049686_wanshang.jpeg",
+				深夜: "https://tu.202685.xyz/file/1786629061846_shenye.jpeg",
 				},
 				imageAlt: "问候配图",
 			},
